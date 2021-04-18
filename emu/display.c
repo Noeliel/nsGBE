@@ -515,7 +515,7 @@ int32_t ppu_exec_cycles(uint32_t clock_cycles_to_execute)
 
     if (ppu_regs.lcdc->lcd_ppu_enable)
     {
-        while (ppu_exec_cycle_counter <= clock_cycles_to_execute)
+        while (ppu_exec_cycle_counter < clock_cycles_to_execute)
         {
             ppu_step();
             ppu_exec_cycle_counter++;

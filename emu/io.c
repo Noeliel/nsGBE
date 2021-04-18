@@ -163,7 +163,7 @@ int32_t io_exec_cycles(uint32_t clock_cycles_to_execute)
 {
     io_exec_cycle_counter = 0;
 
-    while (io_exec_cycle_counter <= clock_cycles_to_execute)
+    while (io_exec_cycle_counter < clock_cycles_to_execute)
     {
             io_step();
             io_exec_cycle_counter++;

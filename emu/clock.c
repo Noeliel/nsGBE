@@ -33,7 +33,7 @@
 
 #define CLOCK_TICKS_PER_SLEEP_CYCLE 1024
 #define SLEEP_CYCLE_HZ (MACHINE_CLOCK_HZ / CLOCK_TICKS_PER_SLEEP_CYCLE)
-#define USEC_PER_SLEEP_CYCLE (USEC_PER_SEC / SLEEP_CYCLE_HZ) * 2
+#define USEC_PER_SLEEP_CYCLE (USEC_PER_SEC / SLEEP_CYCLE_HZ)
 
 #define CLOCK_CYCLES_PER_CLOCK_TICK 1 // setting this value higher may result in bugs due to chip synchronisation, as they're all running on one thread
 #define system_alive (cpu_alive && ppu_alive)
