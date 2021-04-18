@@ -112,6 +112,7 @@ uint32_t mbc3_setup()
         ext_ram_banks[i] = malloc(0x2000);
 
     ext_ram_enabled = 1;
+    active_ext_ram_bank.w = 0;
 
     if (battery_enabled)
         battery_load(ext_ram_banks, ext_ram_bank_count);

@@ -24,14 +24,14 @@
 
 byte **rom_banks/*[0x4000]*/;
 byte **ext_ram_banks/*[0x2000]*/;
-word active_rom_bank;
-word active_ext_ram_bank; // most games only have up to 256 rom banks, still there are some with more, hence using word
+word active_rom_bank = word(0x0001);
+word active_ext_ram_bank = word(0x0000); // most games only have up to 256 rom banks, still there are some with more, hence using word
 
-uint16_t rom_bank_count;
-uint16_t ext_ram_bank_count;
+uint16_t rom_bank_count = 2;
+uint16_t ext_ram_bank_count = 1;
 
-_Bool ext_ram_enabled;
-_Bool battery_enabled;
+_Bool ext_ram_enabled = 1;
+_Bool battery_enabled = 0;
 
 uint16_t (* active_mbc_writes_interpreter)(unsigned short offset, byte data);
 uint16_t (* active_mbc_reads_interpreter)(unsigned short offset);
