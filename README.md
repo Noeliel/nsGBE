@@ -1,4 +1,4 @@
-# nsgbe
+# nsGBE
 **N**o **S**pecial **G**ame **B**oy **E**mulator is a work-in-progress interpreting Game Boy emulator written in C.  
 Its feature set is limited but it is able to run a good amount of original Game Boy (DMG) games that use no MBC or MBC3/5.  
 Support for Game Boy Color games is planned but has not been implemented thus far. Development generally favors 
