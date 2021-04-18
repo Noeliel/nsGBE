@@ -202,3 +202,4 @@ void write_battery()
     if (battery_enabled)
         battery_save(ext_ram_banks, ext_ram_bank_count);
 }
+

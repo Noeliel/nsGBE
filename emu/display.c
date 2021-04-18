@@ -621,3 +621,4 @@ uint16_t ppu_interpret_write(unsigned short offset, byte data)
     
     return 0;
 }
+

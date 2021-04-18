@@ -106,3 +106,4 @@ uint32_t mbc5_setup()
 
     return 0;
 }
+

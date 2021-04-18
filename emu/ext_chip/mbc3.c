@@ -118,3 +118,4 @@ uint32_t mbc3_setup()
 
     return 0;
 }
+

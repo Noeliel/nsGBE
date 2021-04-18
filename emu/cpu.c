@@ -5389,3 +5389,4 @@ struct CPU_INSTRUCTION *cpu_next_instruction()
 
     return instr;
 }
+

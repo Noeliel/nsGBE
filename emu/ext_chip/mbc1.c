@@ -31,3 +31,4 @@ uint32_t mbc1_interpret_read(word offset)
 {
     return 0;
 }
+
