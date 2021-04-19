@@ -85,19 +85,29 @@ _Bool ppu_alive = 0;
 uint32_t ppu_clock_cycle_counter = 0;
 uint32_t ppu_exec_cycle_counter = 0;
 
-byte view_port_1[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT]; // this is what we see on the display (local framebuffer)
+byte view_port_1[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
 byte view_port_2[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
-byte *active_view_port = view_port_1;
+byte view_port_3[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
+
+byte *active_display_viewport = view_port_1;
+byte *next_display_viewport = view_port_2;
+byte *next_ppu_viewport = view_port_3;
 
 byte bg_color_indices[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
 
-void **display_framebuffer; // this is for our frontend to render
 void (* display_notify_vblank)();
 
 _Bool did_oam_read = 0;
 _Bool did_vram_read = 0;
 _Bool did_hblank = 0;
 _Bool did_vblank = 0;
+
+uint8_t *display_request_next_frame()
+{
+    byte *tmp = next_display_viewport;
+    next_display_viewport = active_display_viewport;
+    active_display_viewport = tmp;
+}
 
 void ppu_break()
 {
@@ -189,7 +199,7 @@ static void draw_background_line(uint8_t line)
         color = dmg_color_palette[color_index];
 
         uint16_t pixel_index = x + line * GB_FRAMEBUFFER_WIDTH;
-        active_view_port[pixel_index] = color;
+        next_ppu_viewport[pixel_index] = color;
         bg_color_indices[pixel_index] = color_palette_index;
     }
 }
@@ -274,7 +284,7 @@ static void draw_window_line(uint8_t line)
         color = dmg_color_palette[color_index];
 
         uint16_t pixel_index = x + line * GB_FRAMEBUFFER_WIDTH;
-        active_view_port[pixel_index] = color;
+        next_ppu_viewport[pixel_index] = color;
         bg_color_indices[pixel_index] = color_palette_index;
     }
 }
@@ -342,7 +352,7 @@ static void draw_sprites_on_line(uint8_t line)
 
                     // this is not correct -- see pandocs note on sprite priorities and conflicts
                     if (color_palette_index != 0 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))
-                        active_view_port[pixel_index] = color;
+                        next_ppu_viewport[pixel_index] = color;
                 }
             }
         }
@@ -422,19 +432,13 @@ static void vblank()
 
         // do vblank stuff
 
-        // push image to framebuffer
-        if (display_framebuffer)
-        {
-            //printf("drawing frame\n");
-            *display_framebuffer = active_view_port;
-            if (display_notify_vblank)
-                display_notify_vblank();
-        }
+        uint8_t *tmp = next_display_viewport;
+        next_display_viewport = next_ppu_viewport;
+        next_ppu_viewport = tmp;
 
-        // switch view ports to prevent tearing
-        active_view_port = (uintptr_t)active_view_port ^ (uintptr_t)view_port_1;
-        active_view_port = (uintptr_t)active_view_port ^ (uintptr_t)view_port_2;
-        // (still tears btw since gui redrawing is an asynchronous request)
+        //printf("drawing frame\n");
+        if (display_notify_vblank)
+            display_notify_vblank();
         
         if (mem.map.interrupt_enable_reg.VBLANK)
             mem.map.interrupt_flag_reg.VBLANK = 1;
@@ -529,57 +533,57 @@ void hi_test()
 {
     // H
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
-    active_view_port[7 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
+    next_ppu_viewport[7 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 4] = 0xFF;
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
-    active_view_port[7 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
+    next_ppu_viewport[7 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 5] = 0xFF;
 
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 6] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 7] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 6] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 7] = 0xFF;
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
-    active_view_port[7 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
+    next_ppu_viewport[7 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 8] = 0xFF;
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
-    active_view_port[7 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
+    next_ppu_viewport[7 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 9] = 0xFF;
 
     // I
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
-    active_view_port[7 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
+    next_ppu_viewport[7 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 12] = 0xFF;
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
-    active_view_port[7 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
+    next_ppu_viewport[7 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 13] = 0xFF;
 
     // !
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 17] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 17] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 17] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 17] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 17] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 17] = 0xFF;
 
-    active_view_port[4 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
-    active_view_port[5 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
-    active_view_port[6 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
-    active_view_port[8 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
+    next_ppu_viewport[4 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
+    next_ppu_viewport[5 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
+    next_ppu_viewport[6 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
+    next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
 }
 
 void ppu_reset()

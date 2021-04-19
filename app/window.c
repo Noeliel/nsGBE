@@ -35,9 +35,8 @@
 #define KEY_A     0x61 // left
 #define KEY_D     0x64 // right
 
-extern void *display_framebuffer;
 extern void (* display_notify_vblank)();
-
+extern uint8_t *display_request_next_frame();
 uint8_t *framebuffer;
 
 GtkWidget *display;
@@ -67,8 +66,7 @@ static void clear_surface()
 
 void vblank()
 {
-    if (!framebuffer)
-        return;
+    framebuffer = display_request_next_frame();
 
     cairo_t *cr;
 
@@ -325,7 +323,6 @@ int gui_main(int argc, char **argv)
     GtkApplication *app;
     int status;
 
-    display_framebuffer = &framebuffer;
     display_notify_vblank = &handle_vblank;
 
     app = gtk_application_new("com.noeliel.nsgbe", G_APPLICATION_FLAGS_NONE);
