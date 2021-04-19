@@ -344,38 +344,32 @@ static void instr_RRA(struct CPU_INSTRUCTION *instr) // Rotate register A right
     cpu_regs.F.H = 0;
 }
 
-static void instr_DAA(struct CPU_INSTRUCTION *instr) // taken from http://forums.nesdev.com/viewtopic.php?t=9088 (untested)
+static void instr_DAA(struct CPU_INSTRUCTION *instr)
 {
-    uint16_t a = cpu_regs.A;
+    uint16_t val = cpu_regs.A;
 
     if (!cpu_regs.F.N)
     {
-        if (cpu_regs.F.H || (a & 0xF) > 9)
-            a += 0x06;
+        if (cpu_regs.F.H || (val & 0xF) > 0x9)
+            val += 0x06;
 
-        if (cpu_regs.F.C || a > 0x9F)
-            a += 0x60;
+        if (cpu_regs.F.C || val > 0x9F)
+            val += 0x60;
     }
     else
     {
         if (cpu_regs.F.H)
-            a = (a - 6) & 0xFF;
+            val = (val - 0x06) & 0xFF;
 
         if (cpu_regs.F.C)
-            a -= 0x60;
+            val -= 0x60;
     }
 
-    cpu_regs.F.b &= ~(FLAG_HCARRY | FLAG_ZERO);
+    cpu_regs.A = (val & 0xFF);
 
-    if ((a & 0x100) == 0x100)
-        cpu_regs.F.b |= FLAG_CARRY;
-
-    a &= 0xFF;
-
-    if (a == 0)
-        cpu_regs.F.b |= FLAG_ZERO;
-
-    cpu_regs.A = (byte)a;
+    cpu_regs.F.Z = (cpu_regs.A == 0);
+    cpu_regs.F.H = 0;
+    cpu_regs.F.C = (val > 0xFF ? 1 : cpu_regs.F.C);
 }
 
 static void instr_SCF(struct CPU_INSTRUCTION *instr)
