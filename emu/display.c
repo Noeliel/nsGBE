@@ -93,6 +93,8 @@ byte *active_display_viewport = view_port_1;
 byte *next_display_viewport = view_port_2;
 byte *next_ppu_viewport = view_port_3;
 
+_Bool swapping_buffers = 0;
+
 byte bg_color_indices[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
 
 void (* display_notify_vblank)();
@@ -104,9 +106,18 @@ _Bool did_vblank = 0;
 
 uint8_t *display_request_next_frame()
 {
+    while (swapping_buffers)
+    { }
+
+    swapping_buffers = 1;
+
     byte *tmp = next_display_viewport;
     next_display_viewport = active_display_viewport;
     active_display_viewport = tmp;
+
+    swapping_buffers = 0;
+
+    return active_display_viewport;
 }
 
 void ppu_break()
@@ -432,9 +443,16 @@ static void vblank()
 
         // do vblank stuff
 
+        while (swapping_buffers)
+        { }
+
+        swapping_buffers = 1;
+
         uint8_t *tmp = next_display_viewport;
         next_display_viewport = next_ppu_viewport;
         next_ppu_viewport = tmp;
+
+        swapping_buffers = 0;
 
         //printf("drawing frame\n");
         if (display_notify_vblank)
