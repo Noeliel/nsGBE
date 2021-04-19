@@ -24,7 +24,7 @@
 
 extern _Bool ext_ram_enabled;
 
-uint16_t mbc5_interpret_write(unsigned short offset, byte data)
+uint16_t mbc5_interpret_write(uint16_t offset, byte data)
 {
     if (offset >= 0x0000 && offset <= 0x1FFF)
     {
@@ -82,7 +82,7 @@ uint16_t mbc5_interpret_write(unsigned short offset, byte data)
     return 0;
 }
 
-uint16_t mbc5_interpret_read(unsigned short offset)
+uint16_t mbc5_interpret_read(uint16_t offset)
 {    
     return 0;   
 }

@@ -202,15 +202,15 @@ static void instr_ADC_r_s(struct CPU_INSTRUCTION *instr) // Add register data8 +
     byte *reg = (byte *)instr->operands[0];
     byte *val = (byte *)instr->operands[1];
 
-	uint16_t result = (* reg) + *val + cpu_regs.F.C;
+    uint16_t result = (* reg) + *val + cpu_regs.F.C;
     uint16_t half_result = ((* reg) & 0xF) + (*val & 0xF) + cpu_regs.F.C;
 
-	cpu_regs.F.N = 0;
-	cpu_regs.F.H = half_result > 0x0F;
-	cpu_regs.F.C = result > 0xFF;
+    cpu_regs.F.N = 0;
+    cpu_regs.F.H = half_result > 0x0F;
+    cpu_regs.F.C = result > 0xFF;
 
-	*reg = (result & 0xFF);
-	cpu_regs.F.Z = ((* reg) == 0);
+    *reg = (result & 0xFF);
+    cpu_regs.F.Z = ((* reg) == 0);
 }
 
 static void instr_ADD_rr_rr(struct CPU_INSTRUCTION *instr) // Add combined register combined register
@@ -277,15 +277,15 @@ static void instr_SBC_r_s(struct CPU_INSTRUCTION *instr)
     byte *reg = (byte *)instr->operands[0];
     byte *val = (byte *)instr->operands[1];
 
-	int16_t result = (* reg) - *val - cpu_regs.F.C;
+    int16_t result = (* reg) - *val - cpu_regs.F.C;
     int16_t half_result = ((* reg) & 0xF) - (*val & 0xF) - cpu_regs.F.C;
 
-	cpu_regs.F.N = 1;
-	cpu_regs.F.H = half_result < 0;
-	cpu_regs.F.C = result < 0;
+    cpu_regs.F.N = 1;
+    cpu_regs.F.H = half_result < 0;
+    cpu_regs.F.C = result < 0;
 
-	*reg = ((uint16_t)result & 0xFF);
-	cpu_regs.F.Z = ((* reg) == 0);
+    *reg = ((uint16_t)result & 0xFF);
+    cpu_regs.F.Z = ((* reg) == 0);
 }
 
 static void instr_CPL(struct CPU_INSTRUCTION *instr) // untested (guessing it's bitwise complement)
@@ -1100,7 +1100,9 @@ uint32_t cpu_step() // advance one op
 
 int32_t cpu_exec_cycles(uint32_t clock_cycles_to_execute)
 {
+#ifdef __DEBUG
     char input[2];
+#endif
 
     clock_cycle_counter = 0;
     
@@ -3431,42 +3433,42 @@ struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
                 instr->description = "SLA B";
-            	break;
+                break;
             
             case 0x21:
                 instr->handler = &instr_SLA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
                 instr->description = "SLA C";
-            	break;
+                break;
             
             case 0x22:
                 instr->handler = &instr_SLA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
                 instr->description = "SLA D";
-            	break;
+                break;
             
             case 0x23:
                 instr->handler = &instr_SLA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
                 instr->description = "SLA E";
-            	break;
+                break;
             
             case 0x24:
                 instr->handler = &instr_SLA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
                 instr->description = "SLA H";
-            	break;
+                break;
             
             case 0x25:
                 instr->handler = &instr_SLA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
                 instr->description = "SLA L";
-            	break;
+                break;
             
             case 0x26:
                 instr->handler = &instr_SLA_dd;
@@ -3480,49 +3482,49 @@ struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
                 instr->description = "SLA A";
-            	break;
+                break;
             
             case 0x28:
                 instr->handler = &instr_SRA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
                 instr->description = "SRA B";
-            	break;
+                break;
             
             case 0x29:
                 instr->handler = &instr_SRA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
                 instr->description = "SRA C";
-            	break;
+                break;
             
             case 0x2A:
                 instr->handler = &instr_SRA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
                 instr->description = "SRA D";
-            	break;
+                break;
             
             case 0x2B:
                 instr->handler = &instr_SRA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
                 instr->description = "SRA E";
-            	break;
+                break;
             
             case 0x2C:
                 instr->handler = &instr_SRA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
                 instr->description = "SRA H";
-            	break;
+                break;
             
             case 0x2D:
                 instr->handler = &instr_SRA_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
                 instr->description = "SRA L";
-            	break;
+                break;
             
             case 0x2E:
                 instr->handler = &instr_SRA_dd;
@@ -3536,7 +3538,7 @@ struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
                 instr->description = "SRA A";
-            	break;
+                break;
             
             case 0x30:
                 instr->handler = &instr_SWAP_r;

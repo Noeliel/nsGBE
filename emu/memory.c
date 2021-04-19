@@ -24,14 +24,14 @@
 
 union MEMORY mem;
 
-void *map_to_physical_location(unsigned short offset);
-unsigned short redirect_ram_echo(unsigned short offset);
-void *redirect_to_active_rom_bank(unsigned short offset);
-void *redirect_to_active_cart_ram_bank(unsigned short offset);
+void *map_to_physical_location(uint16_t offset);
+uint16_t redirect_ram_echo(uint16_t offset);
+void *redirect_to_active_rom_bank(uint16_t offset);
+void *redirect_to_active_cart_ram_bank(uint16_t offset);
 
 _Bool enable_bootrom = 0;
 
-__always_inline byte mem_read(unsigned short offset)
+__always_inline byte mem_read(uint16_t offset)
 {
     // < 0x100: continue; 0x1XX: return XX
     uint16_t component_response = 0;
@@ -57,7 +57,7 @@ __always_inline byte mem_read(unsigned short offset)
     return (* (byte *)map_to_physical_location(offset));
 }
 
-__always_inline word mem_read_16(unsigned short offset) // simulating little endian byte order
+__always_inline word mem_read_16(uint16_t offset) // simulating little endian byte order
 {
     if (offset > 0xFFFE)
         offset = 0xFFFE;
@@ -71,7 +71,7 @@ __always_inline word mem_read_16(unsigned short offset) // simulating little end
     return data;
 }
 
-__always_inline void mem_write(unsigned short offset, byte data)
+__always_inline void mem_write(uint16_t offset, byte data)
 {
     offset &= 0xFFFF;
     data &= 0xFF;
@@ -91,7 +91,7 @@ __always_inline void mem_write(unsigned short offset, byte data)
     (* (byte *)map_to_physical_location(offset)) = data;
 }
 
-__always_inline void mem_write_16(unsigned short offset, word data) // simulating little endian byte order
+__always_inline void mem_write_16(uint16_t offset, word data) // simulating little endian byte order
 {
     if (offset > 0xFFFE)
         offset = 0xFFFE;
@@ -101,7 +101,7 @@ __always_inline void mem_write_16(unsigned short offset, word data) // simulatin
 }
 
 // todo: move redirection to rom into mbc implementations
-__always_inline void *map_to_physical_location(unsigned short offset)
+__always_inline void *map_to_physical_location(uint16_t offset)
 {
     offset = redirect_ram_echo(offset);
 
@@ -117,7 +117,7 @@ __always_inline void *map_to_physical_location(unsigned short offset)
     return mem.raw + offset;
 }
 
-__always_inline unsigned short redirect_ram_echo(unsigned short offset)
+__always_inline uint16_t redirect_ram_echo(uint16_t offset)
 {
     if (offset >= 0xE000 && offset <= 0xFDFF)
         offset -= 0x2000;
@@ -126,13 +126,13 @@ __always_inline unsigned short redirect_ram_echo(unsigned short offset)
 }
 
 // todo: move into mbc implementations
-__always_inline void *redirect_to_active_rom_bank(unsigned short offset)
+__always_inline void *redirect_to_active_rom_bank(uint16_t offset)
 {
     return rom_banks[active_rom_bank.w] + offset;
 }
 
 // todo: move into mbc implementations
-__always_inline void *redirect_to_active_cart_ram_bank(unsigned short offset)
+__always_inline void *redirect_to_active_cart_ram_bank(uint16_t offset)
 {
     return ext_ram_banks[active_ext_ram_bank.w] + offset;
 }

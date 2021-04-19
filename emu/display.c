@@ -212,7 +212,7 @@ static void draw_window_line(uint8_t line)
 
     for (byte x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
     {
-        // bg is enabled, render
+        // window is enabled, render
 
         // which pixel in the window map
         byte window_map_pixel_index_x = x - real_window_origin_x; // seems fine
@@ -595,12 +595,12 @@ void ppu_reset()
     // hi_test();
 }
 
-uint16_t ppu_interpret_read(unsigned short offset)
+uint16_t ppu_interpret_read(uint16_t offset)
 {
     return 0;
 }
 
-uint16_t ppu_interpret_write(unsigned short offset, byte data)
+uint16_t ppu_interpret_write(uint16_t offset, byte data)
 {
     if (offset >= OAM && offset <= OAM_END) // we can only write here during hblank and vblank
         if (ppu_regs.stat->mode == PPU_OAM_READ_MODE || ppu_regs.stat->mode == PPU_VRAM_READ_MODE)

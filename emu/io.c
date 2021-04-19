@@ -91,7 +91,7 @@ static void sync_button_states()
     //encode_joypad_byte(0);
 }
 
-__always_inline uint16_t io_interpret_read(unsigned short offset)
+__always_inline uint16_t io_interpret_read(uint16_t offset)
 {
     //if (offset == IO_JOYPAD) // keypad register; todo: better
         //return 0x1FF;
@@ -102,7 +102,7 @@ __always_inline uint16_t io_interpret_read(unsigned short offset)
     return 0;
 }
 
-__always_inline uint16_t io_interpret_write(unsigned short offset, byte data)
+__always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
 {
     if (offset == IO_BOOTROM_CONTROL)
         if (data > 0)

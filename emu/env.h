@@ -247,10 +247,10 @@ union MEMORY {
 
 extern union MEMORY mem; // due to endianess & mapping you shouldn't access this directly; instead, use the 4 functions below
 
-extern byte mem_read(unsigned short offset);
-extern word mem_read_16(unsigned short offset);
-extern void mem_write(unsigned short offset, byte data);
-extern void mem_write_16(unsigned short offset, word data);
+extern byte mem_read(uint16_t offset);
+extern word mem_read_16(uint16_t offset);
+extern void mem_write(uint16_t offset, byte data);
+extern void mem_write_16(uint16_t offset, word data);
 
 extern _Bool enable_bootrom;
 
@@ -309,8 +309,8 @@ union JOYPAD_IO {
 };
 
 extern int32_t io_exec_cycles(uint32_t clock_cycles_to_execute);
-extern uint16_t io_interpret_read(unsigned short offset);
-extern uint16_t io_interpret_write(unsigned short offset, byte data);
+extern uint16_t io_interpret_read(uint16_t offset);
+extern uint16_t io_interpret_write(uint16_t offset, byte data);
 
 /*--------------------EXT_CHIP--------------------*/
 
@@ -323,8 +323,8 @@ extern word active_ext_ram_bank;
 
 extern _Bool battery_enabled;
 
-extern uint16_t (* active_mbc_writes_interpreter)(unsigned short offset, byte data);
-extern uint16_t (* active_mbc_reads_interpreter)(unsigned short offset);
+extern uint16_t (* active_mbc_writes_interpreter)(uint16_t offset, byte data);
+extern uint16_t (* active_mbc_reads_interpreter)(uint16_t offset);
 
 extern uint32_t mbc3_setup();
 extern uint32_t mbc5_setup();
@@ -424,8 +424,8 @@ extern void ppu_step();
 extern int32_t ppu_exec_cycles(uint32_t clock_cycles_to_execute);
 extern void ppu_break();
 
-extern uint16_t ppu_interpret_read(unsigned short offset);
-extern uint16_t ppu_interpret_write(unsigned short offset, byte data);
+extern uint16_t ppu_interpret_read(uint16_t offset);
+extern uint16_t ppu_interpret_write(uint16_t offset, byte data);
 
 /*---------------------NOTES----------------------*/
 

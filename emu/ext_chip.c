@@ -33,11 +33,11 @@ uint16_t ext_ram_bank_count = 1;
 _Bool ext_ram_enabled = 1;
 _Bool battery_enabled = 0;
 
-uint16_t (* active_mbc_writes_interpreter)(unsigned short offset, byte data);
-uint16_t (* active_mbc_reads_interpreter)(unsigned short offset);
+uint16_t (* active_mbc_writes_interpreter)(uint16_t offset, byte data);
+uint16_t (* active_mbc_reads_interpreter)(uint16_t offset);
 
-uint16_t generic_mbc_interpret_write(unsigned short offset, byte data);
-uint16_t generic_mbc_interpret_read(unsigned short offset);
+uint16_t generic_mbc_interpret_write(uint16_t offset, byte data);
+uint16_t generic_mbc_interpret_read(uint16_t offset);
 
 static void init_random_ram() // todo: better; currently not in use
 {
@@ -216,17 +216,17 @@ int ext_chip_setup()
     return 0;
 }
 
-uint16_t mbc_interpret_write(unsigned short offset, byte data)
+uint16_t mbc_interpret_write(uint16_t offset, byte data)
 {
     return active_mbc_writes_interpreter(offset, data);
 }
 
-uint16_t mbc_interpret_read(unsigned short offset)
+uint16_t mbc_interpret_read(uint16_t offset)
 {
     return active_mbc_reads_interpreter(offset);
 }
 
-uint16_t generic_mbc_interpret_write(unsigned short offset, byte data)
+uint16_t generic_mbc_interpret_write(uint16_t offset, byte data)
 {
     if (offset >= 0x0000 && offset <= 0x1FFF)
     {
@@ -256,7 +256,7 @@ uint16_t generic_mbc_interpret_write(unsigned short offset, byte data)
     return 0;
 }
 
-uint16_t generic_mbc_interpret_read(unsigned short offset)
+uint16_t generic_mbc_interpret_read(uint16_t offset)
 {
     if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
         return 0x1FF; // external ram is disabled
