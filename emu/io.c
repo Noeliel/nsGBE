@@ -49,7 +49,7 @@ __always_inline byte dma_transfer()
     dma_timer--;
 }
 
-static void encode_joypad_byte(byte data)
+__always_inline static void encode_joypad_byte(byte data)
 {
     union JOYPAD_IO *jp = &data;
 
@@ -80,7 +80,7 @@ static void encode_joypad_byte(byte data)
     jp->unused = 3;
 }
 
-static void sync_button_states()
+__always_inline static void sync_button_states()
 {    
     if (unencoded_button_state.b != button_states.b)
         if (mem.map.interrupt_enable_reg.JOYPAD)
@@ -140,7 +140,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
     return 0;
 }
 
-void io_step()
+__always_inline void io_step()
 {
     if (dma_timer > 0)
         dma_transfer();
@@ -159,7 +159,7 @@ void io_step()
     sync_button_states();
 }
 
-int32_t io_exec_cycles(uint32_t clock_cycles_to_execute)
+__always_inline int32_t io_exec_cycles(uint32_t clock_cycles_to_execute)
 {
     io_exec_cycle_counter = 0;
 

@@ -226,7 +226,7 @@ uint16_t mbc_interpret_read(uint16_t offset)
     return active_mbc_reads_interpreter(offset);
 }
 
-uint16_t generic_mbc_interpret_write(uint16_t offset, byte data)
+__always_inline uint16_t generic_mbc_interpret_write(uint16_t offset, byte data)
 {
     if (offset >= 0x0000 && offset <= 0x1FFF)
     {
@@ -256,7 +256,7 @@ uint16_t generic_mbc_interpret_write(uint16_t offset, byte data)
     return 0;
 }
 
-uint16_t generic_mbc_interpret_read(uint16_t offset)
+__always_inline uint16_t generic_mbc_interpret_read(uint16_t offset)
 {
     if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
         return 0x1FF; // external ram is disabled

@@ -125,12 +125,12 @@ void ppu_break()
     ppu_alive = 0;
 }
 
-static void oam_search()
+__always_inline static void oam_search()
 {
 
 }
 
-static void draw_background_line(uint8_t line)
+__always_inline static void draw_background_line(uint8_t line)
 {
     byte color = 0x00;
 
@@ -215,7 +215,7 @@ static void draw_background_line(uint8_t line)
     }
 }
 
-static void draw_window_line(uint8_t line)
+__always_inline static void draw_window_line(uint8_t line)
 {
     byte color = 0x00;
 
@@ -300,7 +300,7 @@ static void draw_window_line(uint8_t line)
     }
 }
 
-static void draw_sprites_on_line(uint8_t line)
+__always_inline static void draw_sprites_on_line(uint8_t line)
 {
     byte color = 0x00;
 
@@ -370,7 +370,7 @@ static void draw_sprites_on_line(uint8_t line)
     }
 }
 
-static void render_scanline()
+__always_inline static void render_scanline()
 {
     byte line = mem.raw[LY];
 
@@ -386,12 +386,12 @@ static void render_scanline()
         draw_sprites_on_line(line);
 }
 
-static void update_tilemap()
+__always_inline static void update_tilemap()
 {
 
 }
 
-static void oam_read()
+__always_inline static void oam_read()
 {
     if (!did_oam_read)
     {
@@ -403,7 +403,7 @@ static void oam_read()
     ppu_clock_cycle_counter++;
 }
 
-static void vram_read()
+__always_inline static void vram_read()
 {
     if (!did_vram_read)
     {
@@ -418,7 +418,7 @@ static void vram_read()
     ppu_clock_cycle_counter++;
 }
 
-static void hblank()
+__always_inline static void hblank()
 {
     if (!did_hblank)
     {
@@ -435,7 +435,7 @@ static void hblank()
     ppu_clock_cycle_counter++;
 }
 
-static void vblank()
+__always_inline static void vblank()
 {
     if (!did_vblank)
     {
@@ -465,7 +465,7 @@ static void vblank()
     ppu_clock_cycle_counter++;
 }
 
-void ppu_step()
+__always_inline void ppu_step()
 {
     switch(ppu_regs.stat->mode)
     {
@@ -531,7 +531,7 @@ void ppu_step()
     }
 }
 
-int32_t ppu_exec_cycles(uint32_t clock_cycles_to_execute)
+__always_inline int32_t ppu_exec_cycles(uint32_t clock_cycles_to_execute)
 {
     ppu_exec_cycle_counter = 0;
 
@@ -617,12 +617,12 @@ void ppu_reset()
     // hi_test();
 }
 
-uint16_t ppu_interpret_read(uint16_t offset)
+__always_inline uint16_t ppu_interpret_read(uint16_t offset)
 {
     return 0;
 }
 
-uint16_t ppu_interpret_write(uint16_t offset, byte data)
+__always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
 {
     if (offset >= OAM && offset <= OAM_END) // we can only write here during hblank and vblank
         if (ppu_regs.stat->mode == PPU_OAM_READ_MODE || ppu_regs.stat->mode == PPU_VRAM_READ_MODE)
