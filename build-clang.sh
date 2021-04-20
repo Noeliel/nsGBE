@@ -3,7 +3,7 @@ mkdir -p out
 rm out/nsgbe
 # -DCOMPILE_TIME="`date -u +'%Y-%m-%d %H:%M:%S UTC'`"
 clang \
-    -O3 \
+    -Ofast \
     `pkg-config --cflags gtk+-3.0` \
     -DGIT_HASH="\"`git rev-parse --short HEAD`\"" \
     -DGIT_BRANCH="\"`git rev-parse --abbrev-ref HEAD`\"" \
