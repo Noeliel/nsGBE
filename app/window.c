@@ -21,6 +21,8 @@
 #include "../emu/env.h"
 #include <gtk/gtk.h>
 
+#define WINDOW_TITLE_FORMATTER "[ nsGBE ] [ %d fps ]"
+
 #define GB_FRAMEBUFFER_WIDTH 160
 #define GB_FRAMEBUFFER_HEIGHT 144
 #define SCREEN_SCALE 3
@@ -39,6 +41,10 @@ extern void (* display_notify_vblank)();
 extern uint8_t *display_request_next_frame();
 uint8_t *framebuffer;
 
+char title_buffer[32];
+uint16_t last_framecounter = 0;
+
+GtkWidget *window;
 GtkWidget *display;
 static cairo_surface_t *surface;
 
@@ -105,6 +111,9 @@ static gboolean redraw_display(GtkWidget *widget, cairo_t *cr, gpointer data)
 
     cairo_set_source_surface(cr, surface, 0, 0);
     cairo_paint(cr);
+
+    sprintf(title_buffer, WINDOW_TITLE_FORMATTER, last_framecounter);
+    gtk_window_set_title(GTK_WINDOW(window), title_buffer);
 
     return FALSE;
 }
@@ -266,10 +275,8 @@ static gint handle_key_release(GtkWidget *widget, GdkEventKey *event, gpointer d
 
 static void activate(GtkApplication* app, gpointer user_data)
 {
-    GtkWidget *window;
-
     window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(window), "nsGBE");
+    gtk_window_set_title(GTK_WINDOW(window), "[ nsGBE ]");
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     //gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
     gtk_window_set_default_size(GTK_WINDOW(window), GB_FRAMEBUFFER_WIDTH * SCREEN_SCALE, GB_FRAMEBUFFER_HEIGHT * SCREEN_SCALE);
@@ -291,7 +298,7 @@ static void activate(GtkApplication* app, gpointer user_data)
 }
 
 long time_start;
-int framecounter = 0;
+uint16_t framecounter = 0;
 void handle_vblank()
 {
     struct timeval tv;
@@ -306,7 +313,7 @@ void handle_vblank()
     if (time_now - time_start > 1000000)
     {
         time_start = time_now;
-        printf("fps: %d\n", framecounter);
+        last_framecounter = framecounter;
         framecounter = 0;
     }
     else
