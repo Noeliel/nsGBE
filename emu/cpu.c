@@ -41,7 +41,7 @@ _Bool cpu_halt = 0;
 
 byte interrupt_master_enable = 0; // 0: disabled, 1: enabled, >1: disabled but transitioning to enabled
 
-uint32_t clock_cycle_counter = 0;
+int32_t clock_cycle_counter = 0;
 uint32_t global_cycle_counter = 0;
 
 #ifdef __DEBUG
@@ -1092,7 +1092,7 @@ __always_inline uint32_t cpu_step() // advance one op
     //free(instr);
 }
 
-__always_inline int32_t cpu_exec_cycles(uint32_t clock_cycles_to_execute)
+__always_inline int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute)
 {
 #ifdef __DEBUG
     char input[2];

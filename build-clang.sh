@@ -8,6 +8,7 @@ clang \
     -DGIT_HASH="\"`git rev-parse --short HEAD`\"" \
     -DGIT_BRANCH="\"`git rev-parse --abbrev-ref HEAD`\"" \
     -Wno-everything \
+    -march=native \
     emu/main.c \
     emu/nsgbe.c \
     emu/clock.c \

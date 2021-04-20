@@ -41,14 +41,14 @@
 _Bool system_overclock = 0;  // indicates whether to apply SYSTEM_OVERCLOCK_MULTIPLIER to the base machine clock frequency
 _Bool system_running = 0;    // indicates whether the system (clock) is running
 
-int32_t cpu_clock_cycles_ahead = 0; // negative means the cpu is in the future by given number of clock cycles
-int32_t ppu_clock_cycles_ahead = 0; // negative means the ppu is in the future by given number of clock cycles
+int32_t cpu_clock_cycles_behind = 0; // negative means the cpu is in the future by given number of clock cycles
+int32_t ppu_clock_cycles_behind = 0; // negative means the ppu is in the future by given number of clock cycles
 
 void clock_tick_cpu_ppu()
 {
     io_exec_cycles(1);
-    cpu_clock_cycles_ahead = cpu_exec_cycles(1 - cpu_clock_cycles_ahead);
-    ppu_clock_cycles_ahead = ppu_exec_cycles(1 - ppu_clock_cycles_ahead);
+    cpu_clock_cycles_behind = cpu_exec_cycles(cpu_clock_cycles_behind + 1);
+    ppu_clock_cycles_behind = ppu_exec_cycles(ppu_clock_cycles_behind + 1);
 }
 
 void clock_tick_machine()

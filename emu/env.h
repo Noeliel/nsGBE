@@ -197,7 +197,7 @@ extern byte interrupt_master_enable;
 
 extern void cpu_reset();
 extern uint32_t cpu_step();
-extern int32_t cpu_exec_cycles(uint32_t clock_cycles_to_execute);
+extern int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute);
 extern void cpu_break();
 extern struct CPU_INSTRUCTION *cpu_next_instruction();
 extern void handle_interrupts();
@@ -308,7 +308,7 @@ union JOYPAD_IO {
     byte b;
 };
 
-extern int32_t io_exec_cycles(uint32_t clock_cycles_to_execute);
+extern int32_t io_exec_cycles(int32_t clock_cycles_to_execute);
 extern uint16_t io_interpret_read(uint16_t offset);
 extern uint16_t io_interpret_write(uint16_t offset, byte data);
 
@@ -421,7 +421,7 @@ extern _Bool ppu_alive;
 
 extern void ppu_reset();
 extern void ppu_step();
-extern int32_t ppu_exec_cycles(uint32_t clock_cycles_to_execute);
+extern int32_t ppu_exec_cycles(int32_t clock_cycles_to_execute);
 extern void ppu_break();
 
 extern uint16_t ppu_interpret_read(uint16_t offset);

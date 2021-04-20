@@ -83,7 +83,7 @@ struct PPU_REGS ppu_regs;
 _Bool ppu_alive = 0;
 
 uint32_t ppu_clock_cycle_counter = 0;
-uint32_t ppu_exec_cycle_counter = 0;
+int32_t ppu_exec_cycle_counter = 0;
 
 byte view_port_1[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
 byte view_port_2[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
@@ -531,7 +531,7 @@ __always_inline void ppu_step()
     }
 }
 
-__always_inline int32_t ppu_exec_cycles(uint32_t clock_cycles_to_execute)
+__always_inline int32_t ppu_exec_cycles(int32_t clock_cycles_to_execute)
 {
     ppu_exec_cycle_counter = 0;
 

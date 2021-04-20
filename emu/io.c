@@ -25,7 +25,7 @@
 #define IO_DIVIDER         0xFF04
 #define IO_TIMER           0xFF05
 
-uint32_t io_exec_cycle_counter = 0;
+int32_t io_exec_cycle_counter = 0;
 
 byte dma_byte;
 uint16_t dma_timer = 0;
@@ -159,7 +159,7 @@ __always_inline void io_step()
     sync_button_states();
 }
 
-__always_inline int32_t io_exec_cycles(uint32_t clock_cycles_to_execute)
+__always_inline int32_t io_exec_cycles(int32_t clock_cycles_to_execute)
 {
     io_exec_cycle_counter = 0;
 
