@@ -12,7 +12,7 @@ Windows and macOS are not (yet?) supported.
 Run `$ build-clang.sh` or `$ build-gcc.sh` to compile the source code into a binary.  
 Makefiles are planned for the near future.
 
-**Note:** Clang builds may currently cause some breakage with certain games. It is recommended that you stick to gcc for the time being.
+**Note:** Clang builds seem to provide slightly better performance.
 
 ## Usage
 
