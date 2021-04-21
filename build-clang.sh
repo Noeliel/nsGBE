@@ -4,7 +4,6 @@ rm -f out/nsgbe
 # -DCOMPILE_TIME="`date -u +'%Y-%m-%d %H:%M:%S UTC'`"
 clang \
     -Ofast \
-    --target=x86_64-unknown-linux-gnu \
     -march=native \
     -Wno-everything \
     `pkg-config --cflags gtk+-3.0` \
