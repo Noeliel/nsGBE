@@ -87,7 +87,10 @@ __always_inline void mem_write(uint16_t offset, byte data)
     
     if (mbc_interpret_write(offset, data) == 0x100)
         return;
-
+    
+    if (offset <= 0x7FFF) // don't allow writing to rom
+        return;
+    
     (* (byte *)map_to_physical_location(offset)) = data;
 }
 
