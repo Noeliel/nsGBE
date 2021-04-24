@@ -30,20 +30,10 @@
 
 //#define __DEBUG 1
 #ifdef __DEBUG
-#define DEBUG_PRINT(x) (debugprint x)
+#define DEBUG_PRINT(x) (printf x)
 #else
 #define DEBUG_PRINT(x) ( NULL )
 #endif
-
-extern _Bool do_print_debug; // set this to 1 to print debugging info (if __DEBUG is defined at compile time)
-
-__fortify_function int debugprint(const char *__restrict __fmt, ...)
-{
-    if (do_print_debug)
-        printf(__fmt, __va_arg_pack());
-    
-    return 0;
-}
 
 typedef uint8_t byte;
 
@@ -247,6 +237,7 @@ union MEMORY {
 
 extern union MEMORY mem; // due to endianess & mapping you shouldn't access this directly; instead, use the 4 functions below
 
+extern void init_memory();
 extern byte mem_read(uint16_t offset);
 extern word mem_read_16(uint16_t offset);
 extern void mem_write(uint16_t offset, byte data);

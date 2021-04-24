@@ -22,8 +22,6 @@
 
 #include "env.h"
 
-_Bool do_print_debug = 1;
-
 void *biosbuffer;
 uintptr_t biossize;
 
