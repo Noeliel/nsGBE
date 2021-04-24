@@ -209,7 +209,7 @@ __always_inline static void draw_background_line(uint8_t line)
 
         color = dmg_color_palette[color_index];
 
-        uint16_t pixel_index = x + line * GB_FRAMEBUFFER_WIDTH;
+        uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
         next_ppu_viewport[pixel_index] = color;
         bg_color_indices[pixel_index] = color_palette_index;
     }
@@ -294,7 +294,7 @@ __always_inline static void draw_window_line(uint8_t line)
 
         color = dmg_color_palette[color_index];
 
-        uint16_t pixel_index = x + line * GB_FRAMEBUFFER_WIDTH;
+        uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
         next_ppu_viewport[pixel_index] = color;
         bg_color_indices[pixel_index] = color_palette_index;
     }
@@ -359,7 +359,7 @@ __always_inline static void draw_sprites_on_line(uint8_t line)
 
                     color = dmg_color_palette[color_index];
 
-                    uint16_t pixel_index = real_sprite_origin_x + sprite_pixel_index_x + mem.raw[LY] * GB_FRAMEBUFFER_WIDTH;
+                    uint16_t pixel_index = real_sprite_origin_x + sprite_pixel_index_x + (mem.raw[LY] % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
 
                     // this is not correct -- see pandocs note on sprite priorities and conflicts
                     if (color_palette_index != 0 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))
@@ -381,14 +381,16 @@ __always_inline static void render_scanline()
         if (ppu_regs.lcdc->window_enable && WINDOW_VISIBLE)
             draw_window_line(line);
     }
+    else
+        for (byte x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
+        {
+            uint16_t pixel_index = x + (mem.raw[LY] % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
+            next_ppu_viewport[pixel_index] = 0xFF;
+            bg_color_indices[pixel_index] = 0;
+        }
 
     if (ppu_regs.lcdc->obj_enable)
         draw_sprites_on_line(line);
-}
-
-__always_inline static void update_tilemap()
-{
-
 }
 
 __always_inline static void oam_read()
