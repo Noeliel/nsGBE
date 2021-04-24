@@ -29,7 +29,6 @@ void *rombuffer;
 uintptr_t romsize;
 struct ROM_HEADER *rom_header;
 
-char *rom_path;
 char *battery_path;
 
 static byte calc_header_checksum(void *rombuffer)
@@ -45,34 +44,6 @@ static byte calc_header_checksum(void *rombuffer)
     return checksum;
 }
 
-int bios_load(char *path)
-{
-    // load file
-    
-    FILE *fbuf = fopen(path, "r");
-    
-    if (!fbuf)
-    {
-        printf("Error trying to open bios file: %s\n", path);
-        return 0;
-    }
-    
-    fseek(fbuf, 0, SEEK_END);
-    biossize = ftell(fbuf);
-    rewind(fbuf);
-    
-    biosbuffer = malloc(biossize);
-    if (!fread(biosbuffer, biossize, 1, fbuf))
-    {
-        printf("Error trying to read bios file: %s\n", path);
-        return 0;
-    }
-    
-    fclose(fbuf);
-
-    return 1;
-}
-
 __always_inline void free_ptr(void **ptr)
 {
     if (*ptr)
@@ -82,49 +53,54 @@ __always_inline void free_ptr(void **ptr)
     }
 }
 
-int rom_load(char *path)
+int bios_load(char *bios_path)
 {
     // load file
 
-    free_ptr(&rom_path);
+    free_ptr(&biosbuffer);
+    
+    biossize = file_read(&biosbuffer, bios_path);
+
+    if (biossize == 0)
+    {
+        printf("Failed to load bios file %s\n", bios_path);
+        return 0;
+    }
+
+    return 1;
+}
+
+int rom_load(char *rom_path)
+{
+    // load file
+
     free_ptr(&battery_path);
+    free_ptr(&rombuffer);
 
-    size_t path_length = strlen(path);
-
-    rom_path = malloc(path_length + 1);
-    strncpy(rom_path, path, path_length + 1);
+    size_t path_length = strlen(rom_path);
     
     battery_path = malloc(path_length + 4 + 1);
 
     memcpy(battery_path, rom_path, path_length + 1);
     strcat(battery_path, ".sav");
 
-    FILE *fbuf = fopen(rom_path, "r");
-    
-    if (!fbuf)
+    romsize = file_read(&rombuffer, rom_path);
+
+    if (romsize == 0)
     {
-        printf("Error trying to open rom file: %s\n", rom_path);
+        printf("Failed to load rom file %s\n", rom_path);
         return 0;
     }
-    
-    fseek(fbuf, 0, SEEK_END);
-    romsize = ftell(fbuf);
-    rewind(fbuf);
-    
-    rombuffer = malloc(romsize);
-    if (!fread(rombuffer, romsize, 1, fbuf))
-    {
-        printf("Error trying to read rom file: %s\n", rom_path);
-        return 0;
-    }
-    
-    fclose(fbuf);
     
     rom_header = rombuffer + 0x100;
 
     printf("\n");
     printf("nsGBE - no special Game Boy Emulator\n");
+#ifdef GIT_HASH
+#ifdef GIT_BRANCH
     printf("rev. %s (%s branch)\n", GIT_HASH, GIT_BRANCH);
+#endif
+#endif
     printf("------------------------------------\n");
     // printf("Start vector: 0x%02x 0x%02x 0x%02x 0x%02x\n", rom_header->start_vector[0], rom_header->start_vector[1], rom_header->start_vector[2], rom_header->start_vector[3]);
     printf("Rom size: %lu byte\n", romsize);
@@ -142,25 +118,16 @@ int rom_load(char *path)
 void battery_load(byte **battery_banks, uint16_t bank_count)
 {
     char *path = battery_path;
+    void *battery_buffer;
+    long battery_size;
 
     // load file
     
-    FILE *fbuf = fopen(path, "r");
-    
-    if (!fbuf)
+    battery_size = file_read(&battery_buffer, battery_path);
+
+    if (battery_size == 0)
     {
-        printf("Error trying to open battery file: %s\n", path);
-        return;
-    }
-    
-    fseek(fbuf, 0, SEEK_END);
-    uint32_t battery_size = ftell(fbuf);
-    rewind(fbuf);
-    
-    void *battery_buffer = malloc(battery_size);
-    if (!fread(battery_buffer, battery_size, 1, fbuf))
-    {
-        printf("Error trying to read battery file: %s\n", path);
+        printf("Failed to load battery file %s\n", battery_path);
         return;
     }
     
@@ -168,7 +135,6 @@ void battery_load(byte **battery_banks, uint16_t bank_count)
         for (uint16_t field = 0; field < 0x2000; field++)
             battery_banks[i][field] = ((byte *)battery_buffer)[field + (i * 0x2000)];
     
-    fclose(fbuf);
     free(battery_buffer);
 }
 
@@ -199,5 +165,20 @@ void write_battery()
 {
     if (battery_enabled)
         battery_save(ext_ram_banks, ext_ram_bank_count);
+}
+
+void system_run()
+{
+    //char *bios_path = get_bios_path();
+
+    //if (!bios_load(bios_path))
+        //return;
+    
+    char *rom_path = get_rom_path();
+    
+    if (!rom_load(rom_path))
+        return;
+
+    clock_run();
 }
 

@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-/*--------------------MISC--------------------*/
+/*---------------------ENV-----------------------*/
 
 //#define __DEBUG 1
 #ifdef __DEBUG
@@ -65,6 +65,16 @@ typedef union {
 
 #define word(value) ((word)(uint16_t)(value))
 
+/*------------platform-specific gui------------*/
+// any frontend or gui provides implementations for these
+
+extern char *get_bios_path();
+extern char *get_rom_path();
+extern long file_read(byte **buffer, char *path);
+extern int file_write(byte *buffer, char *path);
+
+/*--------------------MISC--------------------*/
+
 struct ROM_HEADER {
     byte start_vector[4];
     byte ninty_logo[48];
@@ -95,6 +105,10 @@ extern void system_run();
 extern void battery_save(byte **battery_banks, uint16_t bank_count);
 extern void battery_load(byte **battery_banks, uint16_t bank_count);
 extern void write_battery();
+
+/*--------------------CLOCK----------------------*/
+
+extern void clock_run();
 
 /*---------------------CPU-----------------------*/
 

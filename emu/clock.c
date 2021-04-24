@@ -57,7 +57,7 @@ void clock_tick_machine()
         clock_tick_cpu_ppu();
 }
 
-void system_run()
+void clock_run()
 {    
     struct timeval tv;
     long time_pre, time_post, target_time;

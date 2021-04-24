@@ -24,7 +24,51 @@
 
 #include <nsgbe.h>
 
+char *rompath;
+char *biospath;
+
 extern int gui_main(int argc, char **argv);
+
+char *get_bios_path()
+{
+    return biospath;
+}
+
+char *get_rom_path()
+{
+    return rompath;
+}
+
+long file_read(byte **buffer, char *path)
+{
+    FILE *fbuf = fopen(path, "r");
+    
+    if (!fbuf)
+    {
+        printf("Error trying to open file: %s\n", path);
+        return 0;
+    }
+    
+    fseek(fbuf, 0, SEEK_END);
+    long fsize = ftell(fbuf);
+    rewind(fbuf);
+    
+    *buffer = malloc(fsize);
+    if (!fread(*buffer, fsize, 1, fbuf))
+    {
+        printf("Error trying to read file: %s\n", path);
+        return 0;
+    }
+    
+    fclose(fbuf);
+
+    return fsize;
+}
+
+int file_write(byte *buffer, char *path)
+{
+
+}
 
 static void catch_exit(int signal_num)
 {
@@ -54,12 +98,8 @@ int main(int argc, char **argv) {
         printf("Failed to set up SIGABRT handler.\n");
         return EXIT_FAILURE;
     }
-
-    //if (!bios_load(""))
-        //return 1;
-
-    if (!rom_load(argv[1]))
-        return 1;
+    
+    rompath = argv[1];
 
 #define LAUNCH_WITH_GUI 1
 #ifdef LAUNCH_WITH_GUI
