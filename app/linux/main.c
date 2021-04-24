@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "env.h"
+#include <nsgbe.h>
 
 extern int gui_main(int argc, char **argv);
 

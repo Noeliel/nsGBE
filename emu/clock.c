@@ -18,7 +18,7 @@
 **/
 
 
-#include "env.h"
+#include <nsgbe.h>
 #include <sys/time.h>
 
 #define SYSTEM_OVERCLOCK_MULTIPLIER 4

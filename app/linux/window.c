@@ -18,7 +18,7 @@
 **/
 
 
-#include "../emu/env.h"
+#include <nsgbe.h>
 #include <gtk/gtk.h>
 
 #define WINDOW_TITLE_FORMATTER "[ nsGBE ] [ %d fps ]"

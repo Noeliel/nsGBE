@@ -18,7 +18,7 @@
 **/
 
 
-#include "env.h"
+#include <nsgbe.h>
 
 #define SHOULD_INT(interrupt) ((mem.map.interrupt_flag_reg.interrupt) \
                             && (mem.map.interrupt_enable_reg.interrupt))

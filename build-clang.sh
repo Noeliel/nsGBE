@@ -6,10 +6,11 @@ clang \
     -Ofast \
     -march=native \
     -Wno-everything \
+    -Iemu/ \
     `pkg-config --cflags gtk+-3.0` \
     -DGIT_HASH="\"`git rev-parse --short HEAD`\"" \
     -DGIT_BRANCH="\"`git rev-parse --abbrev-ref HEAD`\"" \
-    emu/main.c \
+    app/linux/main.c \
     emu/nsgbe.c \
     emu/clock.c \
     emu/cpu.c \
@@ -20,6 +21,6 @@ clang \
     emu/ext_chip/mbc1.c \
     emu/ext_chip/mbc3.c \
     emu/ext_chip/mbc5.c \
-    app/window.c \
+    app/linux/window.c \
     `pkg-config --libs gtk+-3.0` \
     -o out/nsgbe

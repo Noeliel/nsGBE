@@ -18,8 +18,8 @@
 **/
 
 
-#ifndef GameGirlColor_env_h
-#define GameGirlColor_env_h
+#ifndef nsGBE_env_h
+#define nsGBE_env_h
 
 #include <stdio.h>
 #include <stddef.h>

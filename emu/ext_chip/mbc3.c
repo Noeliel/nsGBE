@@ -20,7 +20,7 @@
 
 // mbc3 (duh)
 
-#include "../env.h"
+#include <nsgbe.h>
 
 extern _Bool ext_ram_enabled;
 

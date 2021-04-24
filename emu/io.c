@@ -18,7 +18,7 @@
 **/
 
 
-#include "env.h"
+#include <nsgbe.h>
 
 #define IO_BOOTROM_CONTROL 0xFF50
 #define IO_JOYPAD          0xFF00

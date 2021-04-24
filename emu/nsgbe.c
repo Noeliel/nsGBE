@@ -20,7 +20,7 @@
 
 /* nsGBE - no special Game Boy Emulator */
 
-#include "env.h"
+#include <nsgbe.h>
 
 void *biosbuffer;
 uintptr_t biossize;
