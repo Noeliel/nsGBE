@@ -20,7 +20,7 @@
 
 // mbc5 (duh)
 
-#include <nsgbe.h>
+#include <env.h>
 
 extern _Bool ext_ram_enabled;
 

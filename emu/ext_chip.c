@@ -20,7 +20,7 @@
 
 // mbc and other peripherals
 
-#include <nsgbe.h>
+#include <env.h>
 
 byte **rom_banks/*[0x4000]*/;
 byte **ext_ram_banks/*[0x2000]*/;

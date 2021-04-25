@@ -20,7 +20,7 @@
 
 /* nsGBE - no special Game Boy Emulator */
 
-#include <nsgbe.h>
+#include <env.h>
 
 void *biosbuffer;
 uintptr_t biossize;
@@ -28,8 +28,6 @@ uintptr_t biossize;
 void *rombuffer;
 uintptr_t romsize;
 struct ROM_HEADER *rom_header;
-
-char *battery_path;
 
 static byte calc_header_checksum(void *rombuffer)
 {
@@ -53,42 +51,34 @@ __always_inline void free_ptr(void **ptr)
     }
 }
 
-int bios_load(char *bios_path)
+static int bios_load()
 {
     // load file
 
     free_ptr(&biosbuffer);
     
-    biossize = file_read(&biosbuffer, bios_path);
+    biossize = load_bios(&biosbuffer);
 
     if (biossize == 0)
     {
-        printf("Failed to load bios file %s\n", bios_path);
+        printf("Failed to load bios file.\n");
         return 0;
     }
 
     return 1;
 }
 
-int rom_load(char *rom_path)
+static int rom_load()
 {
     // load file
 
-    free_ptr(&battery_path);
     free_ptr(&rombuffer);
 
-    size_t path_length = strlen(rom_path);
-    
-    battery_path = malloc(path_length + 4 + 1);
-
-    memcpy(battery_path, rom_path, path_length + 1);
-    strcat(battery_path, ".sav");
-
-    romsize = file_read(&rombuffer, rom_path);
+    romsize = load_rom(&rombuffer);
 
     if (romsize == 0)
     {
-        printf("Failed to load rom file %s\n", rom_path);
+        printf("Failed to load rom file.\n");
         return 0;
     }
     
@@ -117,17 +107,16 @@ int rom_load(char *rom_path)
 
 void battery_load(byte **battery_banks, uint16_t bank_count)
 {
-    char *path = battery_path;
     void *battery_buffer;
     long battery_size;
 
     // load file
     
-    battery_size = file_read(&battery_buffer, battery_path);
+    battery_size = load_battery(&battery_buffer);
 
     if (battery_size == 0)
     {
-        printf("Failed to load battery file %s\n", battery_path);
+        printf("Failed to load battery file.\n");
         return;
     }
     
@@ -138,26 +127,17 @@ void battery_load(byte **battery_banks, uint16_t bank_count)
     free(battery_buffer);
 }
 
-void battery_save(byte **battery_banks, uint16_t bank_count)
+static void battery_save(byte **battery_banks, uint16_t bank_count)
 {
-    char *path = battery_path;
-
     byte *battery_buffer = malloc(0x2000 * bank_count);
 
     for (uint16_t i = 0; i < bank_count; i++)
         for (uint16_t field = 0; field < 0x2000; field++)
             battery_buffer[field + (i * 0x2000)] = battery_banks[i][field];
 
-    FILE *fbuf = fopen(path, "w");
-    if (!fbuf)
-    {
-        printf("Error trying to open battery file: %s\n", path);
-        return;
-    }
-    
-    fwrite(battery_buffer, 0x2000, bank_count, fbuf);
-    
-    fclose(fbuf);
+    if (save_battery(battery_buffer, 0x2000 * bank_count) == 0)
+        printf("Failed to write battery file.\n");
+
     free(battery_buffer);
 }
 
@@ -169,15 +149,15 @@ void write_battery()
 
 void system_run()
 {
-    //char *bios_path = get_bios_path();
-
-    //if (!bios_load(bios_path))
+    //if (!bios_load())
         //return;
-    
-    char *rom_path = get_rom_path();
-    
-    if (!rom_load(rom_path))
+        
+    if (!rom_load())
         return;
+    
+    init_memory();
+    cpu_reset();
+    ppu_reset();
 
     clock_run();
 }

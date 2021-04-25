@@ -17,14 +17,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 **/
 
-
-#include <nsgbe.h>
 #include <gtk/gtk.h>
+#include <nsgbe.h>
 
 #define WINDOW_TITLE_FORMATTER "[ nsGBE ] [ %d fps ]"
 
-#define GB_FRAMEBUFFER_WIDTH 160
-#define GB_FRAMEBUFFER_HEIGHT 144
 #define SCREEN_SCALE 3
 
 #define KEY_SPACE 0x20 // speed up
@@ -37,8 +34,6 @@
 #define KEY_A     0x61 // left
 #define KEY_D     0x64 // right
 
-extern void (* display_notify_vblank)();
-extern uint8_t *display_request_next_frame();
 uint8_t *framebuffer;
 
 char title_buffer[32];
@@ -84,8 +79,8 @@ void vblank()
     {
         for (int x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
         {
-            uint8_t byte = *(framebuffer + (y * GB_FRAMEBUFFER_WIDTH + x));
-            cairo_set_source_rgb(cr, (float)byte / 255.f, (float)byte / 255.f, (float)byte / 255.f);
+            uint8_t color_byte = *(framebuffer + (y * GB_FRAMEBUFFER_WIDTH + x));
+            cairo_set_source_rgb(cr, (float)color_byte / 255.f, (float)color_byte / 255.f, (float)color_byte / 255.f);
             cairo_rectangle(cr, x * SCREEN_SCALE, y * SCREEN_SCALE, SCREEN_SCALE, SCREEN_SCALE);
             cairo_fill(cr);
         }

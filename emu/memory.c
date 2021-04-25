@@ -20,7 +20,7 @@
 
 // memory controller
 
-#include <nsgbe.h>
+#include <env.h>
 
 union MEMORY mem;
 

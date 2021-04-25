@@ -18,7 +18,7 @@
 **/
 
 
-#include <nsgbe.h>
+#include <env.h>
 #include <sys/time.h>
 
 #define SYSTEM_OVERCLOCK_MULTIPLIER 4
@@ -61,10 +61,6 @@ void clock_run()
 {    
     struct timeval tv;
     long time_pre, time_post, target_time;
-    
-    init_memory();
-    cpu_reset();
-    ppu_reset();
 
     system_running = 1;
 

@@ -26,10 +26,7 @@
 // ...variations based on sprite count; here, we just have the longest possible hblank period.
 // -> this may fail some tests, but it should be good enough for emulation
 
-#include <nsgbe.h>
-
-#define GB_FRAMEBUFFER_WIDTH 160
-#define GB_FRAMEBUFFER_HEIGHT 144
+#include <env.h>
 
 #define WINDOW_VISIBLE ((int8_t)mem.raw[WY] >= 0 && (int8_t)mem.raw[WX] >= 7)
 

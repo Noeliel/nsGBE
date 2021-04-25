@@ -20,7 +20,7 @@
 
 // mbc1 (duh)
 
-#include <nsgbe.h>
+#include <env.h>
 
 uint32_t mbc1_interpret_write(word offset)
 {

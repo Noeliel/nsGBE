@@ -18,7 +18,7 @@
 **/
 
 
-#include <nsgbe.h>
+#include <env.h>
 
 #define IO_BOOTROM_CONTROL 0xFF50
 #define IO_JOYPAD          0xFF00
@@ -33,7 +33,6 @@ uint16_t dma_timer = 0;
 uint32_t divider_counter;
 
 union BUTTON_STATE unencoded_button_state; // local copy of button_states
-extern union BUTTON_STATE button_states; // external state (in platform-specific gui implementation)
 
 __always_inline byte dma_transfer()
 {

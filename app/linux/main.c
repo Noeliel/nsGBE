@@ -22,24 +22,24 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include <nsgbe.h>
+#include <env.h>
 
 char *rompath;
 char *biospath;
+char *batterypath;
 
 extern int gui_main(int argc, char **argv);
 
-char *get_bios_path()
+__always_inline void free_ptr(void **ptr)
 {
-    return biospath;
+    if (*ptr)
+    {
+        free(*ptr);
+        *ptr = 0;
+    }
 }
 
-char *get_rom_path()
-{
-    return rompath;
-}
-
-long file_read(byte **buffer, char *path)
+static long file_read(uint8_t **buffer, char *path)
 {
     FILE *fbuf = fopen(path, "r");
     
@@ -65,9 +65,49 @@ long file_read(byte **buffer, char *path)
     return fsize;
 }
 
-int file_write(byte *buffer, char *path)
+static int file_write(char *path, uint8_t *buffer, size_t size)
 {
+    FILE *fbuf = fopen(path, "w");
+    if (!fbuf)
+    {
+        printf("Error trying to open file: %s\n", path);
+        return 0;
+    }
+    
+    size_t num = fwrite(buffer, size, 1, fbuf);
+    
+    fclose(fbuf);
 
+    return num;
+}
+
+long load_rom(uint8_t **buffer)
+{
+    free_ptr(&batterypath);
+
+    size_t path_length = strlen(rompath);
+    
+    batterypath = malloc(path_length + 4 + 1);
+
+    memcpy(batterypath, rompath, path_length + 1);
+    strcat(batterypath, ".sav");
+
+    return file_read(buffer, rompath);
+}
+
+long load_bios(uint8_t **buffer)
+{
+    return file_read(buffer, biospath);
+}
+
+long load_battery(uint8_t **buffer)
+{
+    return file_read(buffer, batterypath);
+}
+
+int save_battery(uint8_t *buffer, size_t size)
+{
+    return file_write(batterypath, buffer, size);
 }
 
 static void catch_exit(int signal_num)
