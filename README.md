@@ -9,10 +9,12 @@ compatibility over accuracy and performance.
 Currently, the project only contains a gui for Linux based on gtk+3.0 / Cairo.  
 Windows and macOS are not (yet?) supported.
 
-Run `$ build-clang.sh` or `$ build-gcc.sh` to compile the source code into a binary.  
-Makefiles are planned for the near future.
+Run `$ ./configure-linux` to generate build files for Linux using CMake.  
+Then, run `$ ./build` to compile the binary.  
+This will produce `nsgbe` in `out/`.
 
-**Note:** Clang builds seem to provide slightly better performance.
+**Note:** Clang builds seem to yield slightly better performance than GCC.  
+To use Clang instead of your default C/C++ compiler, run `$ export CC=/usr/bin/clang` and `$ export CXX=/usr/bin/clang++` (adjust paths if necessary) prior to executing the `configure-*` script.
 
 ## Usage
 
