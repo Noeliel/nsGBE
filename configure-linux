@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rm -r out/
+cd app/linux/
+cmake -S . -B ../../out/
