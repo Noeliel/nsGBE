@@ -171,4 +171,3 @@ __always_inline int32_t io_exec_cycles(int32_t clock_cycles_to_execute)
 
     return 0;
 }
-

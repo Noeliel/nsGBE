@@ -150,4 +150,3 @@ void init_memory()
     active_rom_bank = word(1);
     active_ext_ram_bank = word(0);
 }
-

@@ -449,4 +449,3 @@ extern uint16_t ppu_interpret_write(uint16_t offset, byte data);
 */
 
 #endif
-
