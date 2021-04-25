@@ -35,4 +35,4 @@ Joypad keys are hardcoded right now. They're mapped as follows:
 | P | Select |
 | Spacebar (hold) | Overclock x4 |
 
-You can customize these to your liking in `app/window.c`.
+You can customize these to your liking in `app/linux/window.c`.
