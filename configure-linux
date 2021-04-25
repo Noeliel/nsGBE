@@ -1,5 +1,5 @@
 #!/bin/sh
 
-rm -r out/
+rm -rf out/
 cd app/linux/
 cmake -S . -B ../../out/
