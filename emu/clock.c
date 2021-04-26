@@ -21,18 +21,11 @@
 #include <env.h>
 #include <sys/time.h>
 
-#define SYSTEM_OVERCLOCK_MULTIPLIER 4
-
-#define USEC_PER_SEC 1000000
-
-#define MACHINE_CLOCK_HZ                (1048576 * (system_overclock ? SYSTEM_OVERCLOCK_MULTIPLIER : 1))
-#define CPU_TICKS_PER_MACHINE_CLOCK     4
-#define PPU_TICKS_PER_MACHINE_CLOCK     4
-#define RAM_TICKS_PER_MACHINE_CLOCK     4
-#define VRAM_TICKS_PER_MACHINE_CLOCK    2
+#define SYSTEM_OVERCLOCK_MULTIPLIER     4
+#define EFFECTIVE_MACHINE_CLOCK_HZ      (MACHINE_CLOCK_HZ * (system_overclock ? SYSTEM_OVERCLOCK_MULTIPLIER : 1))
 
 #define CLOCK_TICKS_PER_SLEEP_CYCLE 1024
-#define SLEEP_CYCLE_HZ (MACHINE_CLOCK_HZ / CLOCK_TICKS_PER_SLEEP_CYCLE)
+#define SLEEP_CYCLE_HZ (EFFECTIVE_MACHINE_CLOCK_HZ / CLOCK_TICKS_PER_SLEEP_CYCLE)
 #define USEC_PER_SLEEP_CYCLE (USEC_PER_SEC / SLEEP_CYCLE_HZ)
 
 #define CLOCK_CYCLES_PER_CLOCK_TICK 1 // setting this value higher may result in bugs due to chip synchronisation, as they're all running on one thread
@@ -44,47 +37,63 @@ _Bool system_running = 0;    // indicates whether the system (clock) is running
 int32_t cpu_clock_cycles_behind = 0; // negative means the cpu is in the future by given number of clock cycles
 int32_t ppu_clock_cycles_behind = 0; // negative means the ppu is in the future by given number of clock cycles
 
-void clock_tick_cpu_ppu()
+__always_inline static void clock_tick_cpu_ppu()
 {
     io_exec_cycles(1);
     cpu_clock_cycles_behind = cpu_exec_cycles(cpu_clock_cycles_behind + 1);
     ppu_clock_cycles_behind = ppu_exec_cycles(ppu_clock_cycles_behind + 1);
 }
 
-void clock_tick_machine()
+__always_inline static void clock_tick_machine()
 {
     for (uint32_t c = 0; c < CPU_TICKS_PER_MACHINE_CLOCK; c++)
         clock_tick_cpu_ppu();
 }
 
-void clock_run()
-{    
+__always_inline static void clock_perform_sleep_cycle_ticks()
+{
+    for (uint32_t c = 0; c < CLOCK_TICKS_PER_SLEEP_CYCLE; c++)
+    {
+        if (!system_running)
+            break;
+
+        clock_tick_machine();
+    }
+}
+
+__always_inline static void clock_perform_sleep_cycle()
+{
     struct timeval tv;
     long time_pre, time_post, target_time;
 
-    system_running = 1;
+    gettimeofday(&tv, NULL);
+    time_pre = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
+    target_time = time_pre + USEC_PER_SLEEP_CYCLE;
 
-    while (system_running && system_alive)
+    clock_perform_sleep_cycle_ticks();
+
+    gettimeofday(&tv, NULL);
+    time_post = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
+
+    // catch in this loop instead of sleeping
+    // less efficient but a little more precise as it seems
+    while (system_running && time_post < target_time)
     {
         gettimeofday(&tv, NULL);
-        time_pre = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
-        target_time = time_pre + USEC_PER_SLEEP_CYCLE;
-
-        for (uint32_t c = 0; c < CLOCK_TICKS_PER_SLEEP_CYCLE; c++)
-            clock_tick_machine();
-
-        gettimeofday(&tv, NULL);
         time_post = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
-
-        // catch in this loop instead of sleeping
-        // less efficient but a little more precise as it seems
-        while (time_post < target_time)
-        {
-            gettimeofday(&tv, NULL);
-            time_post = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
-        }
+    }
         
-        //usleep(target_time - time_post);
+    //usleep(target_time - time_post);
+}
+
+void clock_loop()
+{    
+    while (system_alive)
+    {
+        while (system_running && system_alive)
+            clock_perform_sleep_cycle();
+
+        usleep(1);
     }
     
     if (!system_alive)
@@ -96,4 +105,14 @@ void clock_run()
         printf("PPU alive: %s, Mode: %d\n", (ppu_alive ? "Yes" : "No"), ppu_regs.stat->mode);
         printf("--------------------------------------------------------------------------\n");
     }
+}
+
+void system_resume()
+{
+    system_running = 1;
+}
+
+void system_pause()
+{
+    system_running = 0;
 }

@@ -93,7 +93,16 @@ extern uintptr_t biossize;
 
 /*--------------------CLOCK----------------------*/
 
-extern void clock_run();
+#define USEC_PER_SEC 1000000
+
+#define MACHINE_CLOCK_HZ                1048576
+#define CPU_TICKS_PER_MACHINE_CLOCK     4
+#define PPU_TICKS_PER_MACHINE_CLOCK     CPU_TICKS_PER_MACHINE_CLOCK     // currently ticking at cpu rate
+#define RAM_TICKS_PER_MACHINE_CLOCK     4
+#define VRAM_TICKS_PER_MACHINE_CLOCK    2
+#define IO_TICKS_PER_MACHINE_CLOCK      CPU_TICKS_PER_MACHINE_CLOCK     // currently ticking at cpu rate
+
+extern void clock_loop();
 
 /*---------------------CPU-----------------------*/
 

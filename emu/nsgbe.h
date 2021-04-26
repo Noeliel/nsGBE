@@ -67,8 +67,17 @@ extern int save_battery(uint8_t *buffer, size_t size);
 // frontend can toggle system overclock by changing this bool
 extern _Bool system_overclock;
 
+// run this at least once before launching the event loop
+extern void system_reset();
+
+// launch this in a new thread to run the core in a self-contained event loop
+extern void system_run_event_loop();
+
+// frontend can pause / resume emulation using these two functions
+extern void system_resume();
+extern void system_pause();
+
 // frontend uses these to interact with the core
-extern void system_run();
 extern void write_battery();
 extern uint8_t *display_request_next_frame();
 

@@ -147,7 +147,7 @@ void write_battery()
         battery_save(ext_ram_banks, ext_ram_bank_count);
 }
 
-void system_run()
+void system_reset()
 {
     //if (!bios_load())
         //return;
@@ -158,6 +158,10 @@ void system_run()
     init_memory();
     cpu_reset();
     ppu_reset();
+}
 
-    clock_run();
+void system_run_event_loop()
+{
+    system_resume();
+    clock_loop();
 }

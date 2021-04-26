@@ -140,14 +140,15 @@ int main(int argc, char **argv) {
     }
     
     rompath = argv[1];
+    system_reset();
 
 #define LAUNCH_WITH_GUI 1
 #ifdef LAUNCH_WITH_GUI
     pthread_attr_init(&core_thread_attributes);
-    pthread_create(&core_thread, &core_thread_attributes, system_run, NULL);
+    pthread_create(&core_thread, &core_thread_attributes, system_run_event_loop, NULL);
     gui_main(1, argv);
 #else
-    system_run();
+    system_run_event_loop();
 #endif
 
     return 0;
