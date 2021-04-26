@@ -91,6 +91,7 @@ byte *next_display_viewport = view_port_2;
 byte *next_ppu_viewport = view_port_3;
 
 _Bool swapping_buffers = 0;
+_Bool new_frame_available = 0;
 
 byte bg_color_indices[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
 
@@ -103,16 +104,21 @@ _Bool did_vblank = 0;
 
 uint8_t *display_request_next_frame()
 {
-    while (swapping_buffers)
-    { }
+    if (new_frame_available)
+    {
+        while (swapping_buffers)
+        { }
 
-    swapping_buffers = 1;
+        swapping_buffers = 1;
 
-    byte *tmp = next_display_viewport;
-    next_display_viewport = active_display_viewport;
-    active_display_viewport = tmp;
+        byte *tmp = next_display_viewport;
+        next_display_viewport = active_display_viewport;
+        active_display_viewport = tmp;
 
-    swapping_buffers = 0;
+        new_frame_available = 0;
+
+        swapping_buffers = 0;
+    }
 
     return active_display_viewport;
 }
@@ -450,6 +456,8 @@ __always_inline static void vblank()
         uint8_t *tmp = next_display_viewport;
         next_display_viewport = next_ppu_viewport;
         next_ppu_viewport = tmp;
+
+        new_frame_available = 1;
 
         swapping_buffers = 0;
 
