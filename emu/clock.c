@@ -81,9 +81,25 @@ __always_inline static void clock_perform_sleep_cycle()
     {
         gettimeofday(&tv, NULL);
         time_post = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
+
+        if (target_time - time_post > 200)
+        {
+            usleep(150);
+            continue;
+        }
+
+        if (target_time - time_post > 100)
+        {
+            usleep(70);
+            continue;
+        }
+
+        if (target_time - time_post > 50)
+        {
+            usleep(25);
+            continue;
+        }
     }
-        
-    //usleep(target_time - time_post);
 }
 
 void clock_loop()
