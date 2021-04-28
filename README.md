@@ -6,15 +6,14 @@ compatibility over accuracy and performance.
 
 ## Building
 
-Currently, the project only contains a gui for Linux based on gtk+3.0 / Cairo.  
-Windows and macOS are not (yet?) supported.
+Currently, the project provides gui implementations based on GTK+ 3.0 (Cairo) and SDL2 targeting Linux.  
+Windows and macOS are not officially supported, but the SDL2 flavor should work on those with some minor reconfiguration.
 
-Run `$ ./configure-linux` to generate build files for Linux using CMake.  
-Then, run `$ ./build` to compile the binary.  
-This will produce `nsgbe` in `out/`.
+Run `$ ./configure-gtkplus` to generate build files for GTK+ using CMake.  
+Alternatively, run `$ ./configure-sdl2` to generate build files for SDL2.  
+Then, run `$ ./build` to compile. This will produce `nsgbe` in `out/`.
 
-**Note:** Clang builds seem to yield slightly better performance than GCC.  
-To use Clang instead of your default C/C++ compiler, run `$ export CC=/usr/bin/clang` and `$ export CXX=/usr/bin/clang++` (adjust paths if necessary) prior to executing the `configure-*` script.
+**Note:** To use Clang instead of your default C/C++ compiler (likely GCC if you're on Linux), run `$ export CC=/usr/bin/clang` and `$ export CXX=/usr/bin/clang++` (adjust paths if necessary) prior to executing the `configure-*` script.
 
 ## Usage
 
@@ -35,4 +34,4 @@ Joypad keys are hardcoded right now. They're mapped as follows:
 | P | Select |
 | Spacebar (hold) | Overclock x4 |
 
-You can customize these to your liking in `app/linux/window.c`.
+You can customize these to your liking in `app/*/window.c`.

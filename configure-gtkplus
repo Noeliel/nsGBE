@@ -1,5 +1,5 @@
 #!/bin/sh
 
 rm -rf out/
-cd app/linux/
+cd app/gtkplus/
 cmake -S . -B ../../out/

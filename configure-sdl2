@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rm -rf out/
+cd app/sdl2/
+cmake -S . -B ../../out/
