@@ -228,13 +228,16 @@ __always_inline static void draw_window_line(uint8_t line)
     int16_t real_window_origin_x = wx - 7;
     int16_t real_window_origin_y = wy;
 
+    if (line < real_window_origin_y)
+        return;
+
     // addressing method
     uint16_t tile_data_base_block_0 = (ppu_regs.lcdc->bg_window_tile_data_area ? TILE_DATA_BLOCK_0 : TILE_DATA_BLOCK_2);
     uint16_t tile_data_base_block_1 = TILE_DATA_BLOCK_1;
 
     uint16_t window_tile_map = (ppu_regs.lcdc->window_tile_map_area ? BG_WINDOW_TILE_MAP_2 : BG_WINDOW_TILE_MAP_1);
 
-    for (byte x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
+    for (byte x = real_window_origin_x; x < GB_FRAMEBUFFER_WIDTH; x++)
     {
         // window is enabled, render
 
