@@ -42,7 +42,7 @@ static byte calc_header_checksum(void *rombuffer)
     return checksum;
 }
 
-__always_inline void free_ptr(void **ptr)
+__always_inline static void free_ptr(void **ptr)
 {
     if (*ptr)
     {

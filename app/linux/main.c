@@ -41,7 +41,7 @@ __always_inline void free_ptr(void **ptr)
 
 static long file_read(uint8_t **buffer, char *path)
 {
-    FILE *fbuf = fopen(path, "r");
+    FILE *fbuf = fopen(path, "rb");
     
     if (!fbuf)
     {
@@ -67,7 +67,7 @@ static long file_read(uint8_t **buffer, char *path)
 
 static int file_write(char *path, uint8_t *buffer, size_t size)
 {
-    FILE *fbuf = fopen(path, "w");
+    FILE *fbuf = fopen(path, "wb");
     if (!fbuf)
     {
         printf("Error trying to open file: %s\n", path);

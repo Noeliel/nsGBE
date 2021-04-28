@@ -95,7 +95,8 @@ extern uintptr_t biossize;
 
 #define USEC_PER_SEC 1000000
 
-#define MACHINE_CLOCK_HZ                1048576
+// #define MACHINE_CLOCK_HZ             1053360 // 60 fps
+#define MACHINE_CLOCK_HZ                1048576 // original DMG
 #define CPU_TICKS_PER_MACHINE_CLOCK     4
 #define PPU_TICKS_PER_MACHINE_CLOCK     CPU_TICKS_PER_MACHINE_CLOCK     // currently ticking at cpu rate
 #define RAM_TICKS_PER_MACHINE_CLOCK     4

@@ -107,7 +107,7 @@ uint8_t *display_request_next_frame()
     if (new_frame_available)
     {
         while (swapping_buffers)
-        { }
+        { printf(""); }
 
         swapping_buffers = 1;
 
@@ -449,13 +449,13 @@ __always_inline static void vblank()
         // do vblank stuff
 
         while (swapping_buffers)
-        { }
+        { usleep(1); }
 
         swapping_buffers = 1;
 
-        uint8_t *tmp = next_display_viewport;
-        next_display_viewport = next_ppu_viewport;
-        next_ppu_viewport = tmp;
+        uint8_t *tmp = next_ppu_viewport;
+        next_ppu_viewport = next_display_viewport;
+        next_display_viewport = tmp;
 
         new_frame_available = 1;
 
