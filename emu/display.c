@@ -313,12 +313,12 @@ __always_inline static void draw_sprites_on_line(uint8_t line)
     byte sprite_height = (ppu_regs.lcdc->obj_size ? 16 : 8);
     byte sprite_width = 8;
 
-    for (byte oam_index = 0; oam_index < 40; oam_index++)
+    for (byte oam_index = 40; oam_index > 0; oam_index--)
     {
         // if y is in sprite (handle 8x8 or 8x16)
             // write sprite pixel (x,y) to active_view_port
 
-        struct SPRITE_ATTRIBUTE_DMG *spr_attrs = mem.map.sprite_attr_table + (oam_index * 4);
+        struct SPRITE_ATTRIBUTE_DMG *spr_attrs = mem.map.sprite_attr_table + ((oam_index - 1) * 4);
 
         int16_t real_sprite_origin_y = (spr_attrs->pos_y - 16);
         int16_t real_sprite_origin_x = (spr_attrs->pos_x - 8);
