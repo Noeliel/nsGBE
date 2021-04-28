@@ -280,6 +280,21 @@ union JOYPAD_IO {
     byte b;
 };
 
+union TIMER_CONTROL_IO {
+    struct __attribute__((packed)) {
+#ifdef __LITTLE_ENDIAN__
+        byte clock   : 2;
+        _Bool enable : 1;
+        byte unused  : 5; // unused
+#else
+        byte unused  : 5; // unused
+        _Bool enable : 1;
+        byte clock   : 2;
+#endif
+    };
+    byte b;
+};
+
 extern int32_t io_exec_cycles(int32_t clock_cycles_to_execute);
 extern uint16_t io_interpret_read(uint16_t offset);
 extern uint16_t io_interpret_write(uint16_t offset, byte data);

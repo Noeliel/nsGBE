@@ -24,6 +24,8 @@
 #define IO_JOYPAD          0xFF00
 #define IO_DIVIDER         0xFF04
 #define IO_TIMER           0xFF05
+#define IO_TIMER_MOD       0xFF06
+#define IO_TIMER_CONTROL   0xFF07
 
 int32_t io_exec_cycle_counter = 0;
 
@@ -31,6 +33,7 @@ byte dma_byte;
 uint16_t dma_timer = 0;
 
 uint32_t divider_counter;
+uint32_t timer_counter;
 
 union BUTTON_STATE unencoded_button_state; // local copy of button_states
 
@@ -139,6 +142,60 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
     return 0;
 }
 
+__always_inline void io_timer_step()
+{
+    union TIMER_CONTROL_IO *tac = mem.raw + IO_TIMER_CONTROL;
+
+    if (!tac->enable)
+    {
+        timer_counter = 0;
+        return;
+    }
+
+    timer_counter++;
+    uint32_t timer_threshold = 0;
+
+    switch (tac->clock)
+    {
+        case 0: // 4096 Hz
+            timer_threshold = 1024;
+            break;
+        
+        case 1: // 262144 Hz
+            timer_threshold = 16;
+            break;
+
+        case 2: // 65536 Hz
+            timer_threshold = 64;
+            break;
+
+        case 3: // 16384 Hz
+            timer_threshold = 256;
+            break;
+
+        default:
+            timer_threshold = 0xFFFFFFFF;
+            break;    
+    }
+
+    if (timer_counter > timer_threshold)
+    {
+        uint16_t timer_reg = mem.raw[IO_TIMER];
+        timer_reg++;
+        timer_counter = 0;
+
+        if (timer_reg > 0xFF)
+        {
+            mem.raw[IO_TIMER] = mem.raw[IO_TIMER_MOD];
+            
+            if (mem.map.interrupt_enable_reg.TIMER)
+                mem.map.interrupt_flag_reg.TIMER = 1;
+        }
+        else
+            mem.raw[IO_TIMER] = timer_reg;
+    }
+}
+
 __always_inline void io_step()
 {
     if (dma_timer > 0)
@@ -151,6 +208,8 @@ __always_inline void io_step()
         mem.raw[IO_DIVIDER] += 1;
         divider_counter = 0;
     }
+
+    io_timer_step();
 
     //if (mem.raw[IO_TIMER] < old)
         //mem.map.interrupt_flag_reg.TIMER = 1;

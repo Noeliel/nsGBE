@@ -35,3 +35,7 @@ Joypad keys are hardcoded right now. They're mapped as follows:
 | Spacebar (hold) | Overclock x4 |
 
 You can customize these to your liking in `app/*/window.c`.
+
+## Test Rom Results
+
+![blargg's cpu instruction tests](res/cpu_instrs.png)

@@ -81,9 +81,9 @@ int ext_chip_setup()
             no_mbc_setup();
             break;
             
-        case 0x01:
+        //case 0x01:
             // mbc1
-            break;
+            //break;
             
         //case 0x02:
             // mbc1 + ram
