@@ -955,29 +955,14 @@ __always_inline static void uinstr_EI(struct CPU_INSTRUCTION *instr)
 
 static void fake_dmg_bootrom() // spoof the results of executing the gameboy (classic) bootrom
 {
-    cpu_regs.A = 0x00; // Accumulator
-    cpu_regs.B = 0x00;
-    cpu_regs.C = 0x00;
-    cpu_regs.D = 0x00;
-    cpu_regs.E = 0x00;
-    cpu_regs.F.b = 0x00; // Flags (used for ALU and some other CPU instructions)
-
-    cpu_regs.H = 0x00;
-    cpu_regs.L = 0x00;
-
-    cpu_regs.AF = 0x01; // GB/SGB: 0x01, GBP: 0xFF, GBC: 0x11
-    cpu_regs.F.b = 0xB0;
-
-    cpu_regs.BC = 0x13;
-    cpu_regs.DE = 0xD8;
-    cpu_regs.HL = 0x14D;
+    cpu_regs.AF = 0x01B0; // GB/SGB: 0x01B0, GBP: 0xFFB0, GBC: 0x11B0
+    cpu_regs.BC = 0x0013;
+    cpu_regs.DE = 0x00D8;
+    cpu_regs.HL = 0x014D;
 
     cpu_regs.PC = 0x0100; // if bootstrap's validation succeeds, this is where the cartridge's code takes control
     cpu_regs.SP = 0xFFFE;
 
-    // may need to change order of the following, or just do a high-level reimplementation of bootrom code
-    // this is because changing the order of these like this could potentially lead to unforseeable results
-    // ...since devices may be spoken to here
     mem_write(0xFF05, 0x00);
     mem_write(0xFF06, 0x00);
     mem_write(0xFF07, 0x00);
