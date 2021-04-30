@@ -61,55 +61,47 @@ __always_inline static void clock_perform_sleep_cycle_ticks()
     }
 }
 
+long time_pre;
 __always_inline static void clock_perform_sleep_cycle()
 {
     struct timeval tv;
-    long time_pre, time_post, target_time;
+    int32_t time_now, target_time;
 
-    gettimeofday(&tv, NULL);
-    time_pre = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
     target_time = time_pre + USEC_PER_SLEEP_CYCLE;
 
-    clock_perform_sleep_cycle_ticks();
-
     gettimeofday(&tv, NULL);
-    time_post = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
+    time_now = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
 
-    // catch in this loop instead of sleeping
-    // less efficient but a little more precise as it seems
-    while (system_running && time_post < target_time)
+    int32_t target = (target_time - time_now) - 20;
+    if (target > 0)
     {
+        usleep(target);
+
         gettimeofday(&tv, NULL);
-        time_post = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
-
-        if (target_time - time_post > 200)
-        {
-            usleep(150);
-            continue;
-        }
-
-        if (target_time - time_post > 100)
-        {
-            usleep(70);
-            continue;
-        }
-
-        if (target_time - time_post > 50)
-        {
-            usleep(25);
-            continue;
-        }
+        time_now = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
     }
+
+    while (system_running && time_now < target_time)
+    {
+        usleep(1);
+
+        gettimeofday(&tv, NULL);
+        time_now = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
+    }
+
+    time_pre = target_time;
+
+    clock_perform_sleep_cycle_ticks();
 }
 
 void clock_loop()
-{    
+{
     while (system_alive)
     {
         while (system_running && system_alive)
             clock_perform_sleep_cycle();
 
-        usleep(1);
+        usleep(100);
     }
     
     if (!system_alive)
@@ -125,6 +117,10 @@ void clock_loop()
 
 void system_resume()
 {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    time_pre = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
+
     system_running = 1;
 }
 
