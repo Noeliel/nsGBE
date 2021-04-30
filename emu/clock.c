@@ -80,6 +80,8 @@ __always_inline static void clock_perform_sleep_cycle()
         gettimeofday(&tv, NULL);
         time_now = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
     }
+    else
+        target_time = time_now;
 
     while (system_running && time_now < target_time)
     {
@@ -117,10 +119,6 @@ void clock_loop()
 
 void system_resume()
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    time_pre = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
-
     system_running = 1;
 }
 
