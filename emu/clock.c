@@ -61,19 +61,19 @@ __always_inline static void clock_perform_sleep_cycle_ticks()
     }
 }
 
-long time_pre;
+uint32_t time_pre;
 __always_inline static void clock_perform_sleep_cycle()
 {
     struct timeval tv;
-    int32_t time_now, target_time;
+    uint32_t time_now, target_time;
 
     target_time = time_pre + USEC_PER_SLEEP_CYCLE;
 
     gettimeofday(&tv, NULL);
     time_now = (USEC_PER_SEC * tv.tv_sec + tv.tv_usec);
 
-    int32_t target = (target_time - time_now) - 20;
-    if (target > 0)
+    uint32_t target = (target_time - time_now) - 20;
+    if (target < USEC_PER_SLEEP_CYCLE)
     {
         usleep(target);
 
