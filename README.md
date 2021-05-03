@@ -4,10 +4,19 @@ Its feature set is limited but it is able to run a good amount of original Game 
 Support for Game Boy Color games is planned but has not been implemented thus far. Development generally favors 
 compatibility over accuracy and performance.
 
-## Building
+## Give it a try
+
+You can find browser-based versions of nsGBE hosted on GitHub Pages.  
+[WebAssembly variant](https://noeliel.github.io/nsGBE/wasm) (better performance but requires your browser to support WebAssembly.)  
+[JavaScript variant](https://noeliel.github.io/nsGBE/js) (better browser compatibility but worse performance.)
+
+Please note that you will have to supply your own ROM files.  
+Also, this application runs entirely on your local machine in your browser, so no files are uploaded to any server at any point in time.
+
+## Building (native)
 
 Currently, the project provides gui implementations based on GTK+ 3.0 (Cairo) and SDL2 targeting Linux.  
-Windows and macOS are not officially supported, but the SDL2 flavor should work on those with some minor reconfiguration.
+Windows and macOS are not officially supported, but the SDL2 flavor should work on those with some reconfiguration.
 
 Run `$ ./configure-gtkplus` to generate build files for GTK+ using CMake.  
 Alternatively, run `$ ./configure-sdl2` to generate build files for SDL2.  
