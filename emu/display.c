@@ -82,13 +82,13 @@ _Bool ppu_alive = 0;
 uint32_t ppu_clock_cycle_counter = 0;
 int32_t ppu_exec_cycle_counter = 0;
 
-byte view_port_1[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
-byte view_port_2[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
-byte view_port_3[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
+uint32_t view_port_1[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
+uint32_t view_port_2[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
+uint32_t view_port_3[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT];
 
-byte *active_display_viewport = view_port_1;
-byte *next_display_viewport = view_port_2;
-byte *next_ppu_viewport = view_port_3;
+uint32_t *active_display_viewport = view_port_1;
+uint32_t *next_display_viewport = view_port_2;
+uint32_t *next_ppu_viewport = view_port_3;
 
 _Bool swapping_buffers = 0;
 _Bool new_frame_available = 0;
@@ -102,7 +102,7 @@ _Bool did_vram_read = 0;
 _Bool did_hblank = 0;
 _Bool did_vblank = 0;
 
-uint8_t *display_request_next_frame()
+uint32_t *display_request_next_frame()
 {
     if (new_frame_available)
     {
@@ -111,7 +111,7 @@ uint8_t *display_request_next_frame()
 
         swapping_buffers = 1;
 
-        byte *tmp = next_display_viewport;
+        uint32_t *tmp = next_display_viewport;
         next_display_viewport = active_display_viewport;
         active_display_viewport = tmp;
 
@@ -213,7 +213,7 @@ __always_inline static void draw_background_line(uint8_t line)
         color = dmg_color_palette[color_index];
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = color;
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (color << 16) + (color << 8) + color;
         bg_color_indices[pixel_index] = color_palette_index;
     }
 }
@@ -301,7 +301,7 @@ __always_inline static void draw_window_line(uint8_t line)
         color = dmg_color_palette[color_index];
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = color;
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (color << 16) + (color << 8) + color;
         bg_color_indices[pixel_index] = color_palette_index;
     }
 }
@@ -369,7 +369,7 @@ __always_inline static void draw_sprites_on_line(uint8_t line)
 
                     // this is not correct -- see pandocs note on sprite priorities and conflicts
                     if (color_palette_index != 0 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))
-                        next_ppu_viewport[pixel_index] = color;
+                        next_ppu_viewport[pixel_index] = (0xFF << 24) + (color << 16) + (color << 8) + color;
                 }
             }
         }
@@ -391,7 +391,7 @@ __always_inline static void render_scanline()
         for (byte x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
         {
             uint16_t pixel_index = x + (mem.raw[LY] % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-            next_ppu_viewport[pixel_index] = 0xFF;
+            next_ppu_viewport[pixel_index] = 0xFFFFFFFF;
             bg_color_indices[pixel_index] = 0;
         }
 
@@ -456,7 +456,7 @@ __always_inline static void vblank()
 
         swapping_buffers = 1;
 
-        uint8_t *tmp = next_ppu_viewport;
+        uint32_t *tmp = next_ppu_viewport;
         next_ppu_viewport = next_display_viewport;
         next_display_viewport = tmp;
 

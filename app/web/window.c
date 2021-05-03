@@ -20,9 +20,19 @@
 #include <SDL2/SDL.h>
 #include <nsgbe.h>
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 #define WINDOW_TITLE_FORMATTER "[ nsGBE ] [ %d fps ]"
 
 #define SCREEN_SCALE 3
+
+#define SYSTEM_OVERCLOCK_MULTIPLIER     4
+#define MACHINE_CLOCK_HZ                1048576 // original DMG
+#define EFFECTIVE_MACHINE_CLOCK_HZ      (MACHINE_CLOCK_HZ * (system_overclock ? SYSTEM_OVERCLOCK_MULTIPLIER : 1))
+#define CLOCK_TICKS_PER_SLEEP_CYCLE     1024
+#define SLEEP_CYCLE_HZ (EFFECTIVE_MACHINE_CLOCK_HZ / CLOCK_TICKS_PER_SLEEP_CYCLE)
 
 uint32_t *framebuffer;
 
@@ -31,36 +41,42 @@ uint16_t last_framecounter = 0;
 
 SDL_Window *window;
 SDL_Renderer *renderer;
+SDL_Texture *buffer;
 
 union BUTTON_STATE button_states;
 
-__always_inline void vblank()
+void set_canvas_scale()
+{
+    EM_ASM_({
+        let context = Module['canvas'].getContext('2d');
+        context.scale(3.0, 3.0);
+        context.imageSmoothingEnabled = false;
+        context.webkitImageSmoothingEnabled = false;
+        context.mozImageSmoothingEnabled = false;
+    });
+}
+
+void copy_to_canvas(uint32_t *buffer, int w, int h)
+{
+    EM_ASM_({
+        let data = Module.HEAPU8.slice($0, $0 + $1 * $2 * 4);
+        
+        let smallCanvas = document.getElementById("smallcanvas");
+        let smallContext = smallCanvas.getContext("2d");
+        let imageData = smallContext.getImageData(0, 0, $1, $2);
+        imageData.data.set(data);
+        smallContext.putImageData(imageData, 0, 0);
+
+        let canvas = Module['canvas'];
+        let context = canvas.getContext('2d');
+        context.drawImage(smallCanvas, 0, 0);
+    }, buffer, w, h);
+}
+
+void vblank()
 {
     framebuffer = display_request_next_frame();
-
-    SDL_RenderClear(renderer);
-
-    for (int y = 0; y < GB_FRAMEBUFFER_HEIGHT; y++)
-    {
-        for (int x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
-        {
-            uint32_t color = *(framebuffer + (y * GB_FRAMEBUFFER_WIDTH + x));
-            uint8_t color_r = (color >> 16) & 0xFF;
-            uint8_t color_g = (color >> 8) & 0xFF;
-            uint8_t color_b = color & 0xFF;
-
-            struct SDL_Rect rect;
-            rect.x = x * SCREEN_SCALE;
-            rect.y = y * SCREEN_SCALE;
-            rect.w = SCREEN_SCALE;
-            rect.h = SCREEN_SCALE;
-
-            SDL_SetRenderDrawColor(renderer, color_r, color_g, color_b, 0xFF);
-            SDL_RenderFillRect(renderer, &rect);
-        }
-    }
-
-    SDL_RenderPresent(renderer);
+    copy_to_canvas(framebuffer, GB_FRAMEBUFFER_WIDTH, GB_FRAMEBUFFER_HEIGHT);
 }
 
 long time_start;
@@ -86,6 +102,8 @@ void handle_vblank()
     {
         framecounter++;
     }
+
+    vblank();
 }
 
 static void handleKeyDown(SDL_KeyboardEvent key)
@@ -173,53 +191,62 @@ static void handleKeyUp(SDL_KeyboardEvent key)
             button_states.RIGHT = 0;
             break;
         
+        case SDL_SCANCODE_B:
+            write_battery();
+            break;
+        
         default:
             break;
     }
 }
 
-int gui_main(int argc, char **argv)
+void sdl_renderloop()
 {
     _Bool quit = 0;
+    SDL_Event e;
 
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+    if (!EM_ASM_INT({ return Module.fs_init_finished; }))
+        return;
 
-    SDL_CreateWindowAndRenderer(GB_FRAMEBUFFER_WIDTH * SCREEN_SCALE, GB_FRAMEBUFFER_HEIGHT * SCREEN_SCALE, 0, &window, &renderer);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
-    SDL_SetWindowTitle(window, "[ nsGBE ]");
-
-    SDL_CreateThread(system_run_event_loop, "nsgbe_core", NULL);
-
-    display_notify_vblank = &handle_vblank;
-
-    while (!quit)
+    for (int i = 0; i < (SLEEP_CYCLE_HZ / 60); i++)
     {
-        SDL_Event e;
+        clock_perform_sleep_cycle_ticks();
 
         while (SDL_PollEvent(&e))
         {
             if (e.type == SDL_QUIT)
                 quit = 1;
-            
+                
             if (e.type == SDL_KEYDOWN)
                 handleKeyDown(e.key);
-            
+                
             if (e.type == SDL_KEYUP)
                 handleKeyUp(e.key);
         }
-
-        vblank();
-
-        sprintf(title_buffer, WINDOW_TITLE_FORMATTER, last_framecounter);
-        SDL_SetWindowTitle(window, title_buffer);
     }
 
+    sprintf(title_buffer, WINDOW_TITLE_FORMATTER, last_framecounter);
+    SDL_SetWindowTitle(window, title_buffer);
+}
+
+int gui_main()
+{
+    SDL_Init(SDL_INIT_EVENTS);
+
+    window = SDL_CreateWindow("[ nsGBE ]", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, GB_FRAMEBUFFER_WIDTH * SCREEN_SCALE, GB_FRAMEBUFFER_HEIGHT * SCREEN_SCALE, 0);
+
+    display_notify_vblank = &handle_vblank;
+
+    set_canvas_scale();
+
+    return 0;
+}
+
+void sdl_quit()
+{
     write_battery();
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-
-    return 0;
 }

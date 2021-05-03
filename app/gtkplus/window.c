@@ -34,7 +34,7 @@
 #define KEY_A     0x61 // left
 #define KEY_D     0x64 // right
 
-uint8_t *framebuffer;
+uint32_t *framebuffer;
 
 char title_buffer[32];
 uint16_t last_framecounter = 0;
@@ -79,8 +79,12 @@ void vblank()
     {
         for (int x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
         {
-            uint8_t color_byte = *(framebuffer + (y * GB_FRAMEBUFFER_WIDTH + x));
-            cairo_set_source_rgb(cr, (float)color_byte / 255.f, (float)color_byte / 255.f, (float)color_byte / 255.f);
+            uint32_t color = *(framebuffer + (y * GB_FRAMEBUFFER_WIDTH + x));
+            uint8_t color_r = (color >> 16) & 0xFF;
+            uint8_t color_g = (color >> 8) & 0xFF;
+            uint8_t color_b = color & 0xFF;
+
+            cairo_set_source_rgb(cr, (float)color_r / 255.f, (float)color_g / 255.f, (float)color_b / 255.f);
             cairo_rectangle(cr, x * SCREEN_SCALE, y * SCREEN_SCALE, SCREEN_SCALE, SCREEN_SCALE);
             cairo_fill(cr);
         }

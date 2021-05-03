@@ -50,7 +50,7 @@ __always_inline static void clock_tick_machine()
         clock_tick_cpu_ppu();
 }
 
-__always_inline static void clock_perform_sleep_cycle_ticks()
+__always_inline void clock_perform_sleep_cycle_ticks()
 {
     for (uint32_t c = 0; c < CLOCK_TICKS_PER_SLEEP_CYCLE; c++)
     {
@@ -62,7 +62,7 @@ __always_inline static void clock_perform_sleep_cycle_ticks()
 }
 
 uint32_t time_pre;
-__always_inline static void clock_perform_sleep_cycle()
+__always_inline void clock_perform_sleep_cycle()
 {
     struct timeval tv;
     uint32_t time_now, target_time;

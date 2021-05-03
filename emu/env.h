@@ -67,29 +67,13 @@ typedef union {
 
 /*--------------------MISC--------------------*/
 
-struct ROM_HEADER {
-    byte start_vector[4];
-    byte ninty_logo[48];
-    byte game_title[15];
-    byte gbc_flag;
-    byte new_licensee_code[2];
-    byte sgb_flag;
-    byte cartridge_type;
-    byte rom_size;
-    byte ram_size;
-    byte destination_code; // 0x00 = japan, 0x01 = anywhere else
-    byte old_licensee_code;
-    byte rom_version;
-    byte header_checksum;
-    byte global_checksum[2];
-};
-
-extern struct ROM_HEADER *rom_header;
 extern void *rombuffer;
 extern uintptr_t romsize;
 
 extern void *biosbuffer;
 extern uintptr_t biossize;
+
+extern void battery_load(byte **battery_banks, uint16_t bank_count);
 
 /*--------------------CLOCK----------------------*/
 
