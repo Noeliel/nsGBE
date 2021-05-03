@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rm -rf out/
+cd app/web/wasm/
+cmake -S . -B ../../../out/
