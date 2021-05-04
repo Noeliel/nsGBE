@@ -570,7 +570,7 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
         //printf("color_index: %d\n", color_index);
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_RED(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_BLUE(color_palette_low, color_palette_high);
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_BLUE(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_RED(color_palette_low, color_palette_high);
         bg_color_indices[pixel_index] = (ppu_regs.lcdc->bg_window_enable_prio ? color_palette_index : 0);
     }
 }
@@ -664,7 +664,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         byte color_palette_high = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2) + 1];
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_RED(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_BLUE(color_palette_low, color_palette_high);
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_BLUE(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_RED(color_palette_low, color_palette_high);
         bg_color_indices[pixel_index] = (ppu_regs.lcdc->bg_window_enable_prio ? color_palette_index : 0);
     }
 }
@@ -735,7 +735,7 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
 
                     // this is not correct -- see pandocs note on sprite priorities and conflicts
                     if (color_palette_index != 0 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))
-                        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_RED(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_BLUE(color_palette_low, color_palette_high);
+                        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_BLUE(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_RED(color_palette_low, color_palette_high);
                 }
             }
         }

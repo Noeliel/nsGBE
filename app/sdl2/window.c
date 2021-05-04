@@ -45,9 +45,9 @@ __always_inline void vblank()
         for (int x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
         {
             uint32_t color = *(framebuffer + (y * GB_FRAMEBUFFER_WIDTH + x));
-            uint8_t color_r = (color >> 16) & 0xFF;
+            uint8_t color_b = (color >> 16) & 0xFF;
             uint8_t color_g = (color >> 8) & 0xFF;
-            uint8_t color_b = color & 0xFF;
+            uint8_t color_r = color & 0xFF;
 
             struct SDL_Rect rect;
             rect.x = x * SCREEN_SCALE;
