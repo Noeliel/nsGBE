@@ -1,8 +1,8 @@
 # nsGBE
-**N**o **S**pecial **G**ame **B**oy **E**mulator is a work-in-progress interpreting Game Boy emulator written in C.  
-Its feature set is limited but it is able to run a good amount of original Game Boy (DMG) games that use no MBC or MBC3/5.  
-Support for Game Boy Color games is planned but has not been implemented thus far. Development generally favors 
-compatibility over accuracy and performance.
+**N**o **S**pecial **G**ame **B**oy **E**mulator is a work-in-progress interpreting Game Boy (Color) emulator written in C.  
+Its feature set is limited but it is able to run a good amount of original Game Boy (DMG) and some Game Boy Color (CGB, experimental) games that use no MBC or MBC3/5.  
+APU / audio support is missing and has low priority.  
+Development generally favors compatibility over accuracy and performance.
 
 ## Give it a try
 
@@ -26,7 +26,7 @@ Then, run `$ ./build` to compile. This will produce `nsgbe` in `out/`.
 
 ## Usage
 
-Launch the program by running `$ nsgbe {path/to/rom.gb}`  
+Launch the program by running `$ nsgbe {path/to/rom.*}`  
 Make sure the directory containing your rom file is writable if you wish to be able to save the battery (savegame) upon quitting.
 
 Joypad keys are hardcoded right now. They're mapped as follows:
