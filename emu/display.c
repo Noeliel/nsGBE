@@ -1047,12 +1047,15 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
             return 0x100;
         }
     
-    if (offset >= BCPD && offset <= OCPD) // we can't write here during vram read mode (3)
-        if (ppu_regs.stat->mode == PPU_VRAM_READ_MODE)
-        {
-            DEBUG_PRINT(("ppu blocking mistimed palette data write\n"));
-            return 0x100;
-        }
+    if (gb_mode != MODE_CGB)
+    {
+        if (offset >= BCPD && offset <= OCPD) // we can't write here during vram read mode (3)
+            if (ppu_regs.stat->mode == PPU_VRAM_READ_MODE)
+            {
+                DEBUG_PRINT(("ppu blocking mistimed palette data write\n"));
+                return 0x100;
+            }
+    }
     
     if (gb_mode == MODE_CGB)
     {
