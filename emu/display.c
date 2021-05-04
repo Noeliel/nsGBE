@@ -1043,16 +1043,16 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
     if (offset >= OAM && offset <= OAM_END) // we can only write here during hblank and vblank
         if (ppu_regs.stat->mode == PPU_OAM_READ_MODE || ppu_regs.stat->mode == PPU_VRAM_READ_MODE)
         {
-            printf("ppu blocking mistimed oam write\n");
+            DEBUG_PRINT(("ppu blocking mistimed oam write\n"));
             return 0x100;
         }
     
-    /*if (offset >= BCPD && offset <= OCPD) // we can't write here during vram read mode (3)
+    if (offset >= BCPD && offset <= OCPD) // we can't write here during vram read mode (3)
         if (ppu_regs.stat->mode == PPU_VRAM_READ_MODE)
         {
-            printf("ppu blocking mistimed palette data write\n");
+            DEBUG_PRINT(("ppu blocking mistimed palette data write\n"));
             return 0x100;
-        }*/
+        }
     
     if (gb_mode == MODE_CGB)
     {
