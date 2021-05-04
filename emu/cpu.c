@@ -37,7 +37,8 @@ struct CPU_REGS cpu_regs;
 struct CPU_INSTRUCTION p_instr;
 
 _Bool cpu_alive = 0;
-_Bool cpu_halt = 0;
+_Bool cpu_int_halt = 0;
+_Bool cpu_dma_halt = 0;
 
 byte interrupt_master_enable = 0; // 0: disabled, 1: enabled, >1: disabled but transitioning to enabled
 
@@ -84,7 +85,7 @@ __always_inline static void instr_STOP(struct CPU_INSTRUCTION *instr)
 __always_inline static void instr_HALT(struct CPU_INSTRUCTION *instr)
 {
     DEBUG_PRINT(("halting cpu until next interrupt...\n"));
-    cpu_halt = 1;
+    cpu_int_halt = 1;
 }
 
 __always_inline static void instr_LD_r_s(struct CPU_INSTRUCTION *instr) // Load register data8
@@ -953,7 +954,7 @@ __always_inline static void uinstr_EI(struct CPU_INSTRUCTION *instr)
 
 /* EOF UNSTABLE */
 
-static void fake_dmg_bootrom() // spoof the results of executing the gameboy (classic) bootrom
+__always_inline void fake_dmg_bootrom() // spoof the results of executing the gameboy (classic) bootrom
 {
     cpu_regs.AF = 0x01B0; // GB/SGB: 0x01B0, GBP: 0xFFB0, GBC: 0x11B0
     cpu_regs.BC = 0x0013;
@@ -998,6 +999,13 @@ static void fake_dmg_bootrom() // spoof the results of executing the gameboy (cl
     enable_bootrom = 0;
 }
 
+__always_inline void fake_cgb_bootrom()
+{
+    fake_dmg_bootrom();
+
+    cpu_regs.AF = 0x11B0; // GB/SGB: 0x01B0, GBP: 0xFFB0, GBC: 0x11B0
+}
+
 void cpu_reset()
 {
     cpu_alive = 1;
@@ -1016,8 +1024,6 @@ void cpu_reset()
 
     enable_bootrom = 1;
     interrupt_master_enable = 0;
-
-    fake_dmg_bootrom();
 }
 
 /* old code, removing soon
@@ -1040,7 +1046,7 @@ __always_inline uint32_t cpu_step() // advance one op
 {
     struct CPU_INSTRUCTION *instr = cpu_next_instruction(); // fetch next instruction
     
-    if (!cpu_halt)
+    if (!cpu_int_halt && !cpu_dma_halt)
     {
         DEBUG_PRINT(("@($%04X): 0x%02X ", cpu_regs.PC, instr->opcode));
         if (instr->operands_length > 0)
@@ -1135,7 +1141,7 @@ void cpu_break()
 __always_inline void handle_interrupts()
 {
     if (mem.map.interrupt_flag_reg.b > 0)
-        cpu_halt = 0;
+        cpu_int_halt = 0;
 
     if (interrupt_master_enable != 1)
         return;

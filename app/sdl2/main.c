@@ -19,10 +19,11 @@
 
 
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 
-#include <env.h>
+#include <nsgbe.h>
 
 char *rompath;
 char *biospath;

@@ -89,6 +89,11 @@ uint16_t mbc5_interpret_read(uint16_t offset)
 
 uint32_t mbc5_setup()
 {
+    for (uint16_t i = 1; i < ext_ram_bank_count; i++)
+        free_ptr(&ext_ram_banks[i]);
+    
+    free_ptr(&ext_ram_banks);
+
     active_mbc_writes_interpreter = &mbc5_interpret_write;
     active_mbc_reads_interpreter = &mbc5_interpret_read;
 

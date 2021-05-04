@@ -65,7 +65,18 @@ typedef union {
 
 #define word(value) ((word)(uint16_t)(value))
 
+extern void free_ptr(void **ptr);
+
 /*--------------------MISC--------------------*/
+
+#define PREFER_CGB_MODE 1
+
+typedef enum GB_MODE {
+    MODE_DMG,
+    MODE_CGB
+};
+
+extern enum GB_MODE gb_mode;
 
 extern void *rombuffer;
 extern uintptr_t romsize;
@@ -176,6 +187,7 @@ extern struct CPU_INSTRUCTION;
 
 extern struct CPU_REGS cpu_regs;
 extern _Bool cpu_alive;
+extern _Bool cpu_dma_halt;
 extern byte interrupt_master_enable;
 
 extern void cpu_reset();
@@ -184,6 +196,9 @@ extern int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute);
 extern void cpu_break();
 extern struct CPU_INSTRUCTION *cpu_next_instruction();
 extern void handle_interrupts();
+
+extern void fake_dmg_bootrom();
+extern void fake_cgb_bootrom();
 
 /*---------------------MEMORY--------------------*/
 
@@ -229,6 +244,13 @@ union MEMORY {
 };
 
 extern union MEMORY mem; // due to endianess & mapping you shouldn't access this directly; instead, use the 4 functions below
+
+/* CGB stuff */
+
+extern byte cgb_extra_vram_bank[0x2000];
+extern byte cgb_extra_wram_banks[8][0x1000];
+
+/* EOF CGB stuff */
 
 extern void init_memory();
 extern byte mem_read(uint16_t offset);
@@ -320,17 +342,21 @@ extern uint32_t mbc5_setup();
 #define OBP0 0xFF48 // (r/w) object palette 0 data (not on gameboy color)
 #define OBP1 0xFF49 // (r/w) object palette 1 data (not on gameboy color)
 
+#define VBK 0xFF4F // (r/w) active vram bank (only on gameboy color)
+
+#define HDMA1 0xFF51 // (w) new source, high (only on gameboy color)
+#define HDMA2 0xFF52 // (w) new source, low (only on gameboy color)
+#define HDMA3 0xFF53 // (w) new destination, high (only on gameboy color)
+#define HDMA4 0xFF54 // (w) new destination, low (only on gameboy color)
+#define HDMA5 0xFF55 // (w) new dma length/mode/start (only on gameboy color)
+
 #define WY   0xFF4A // (r/w) window y position
 #define WX   0xFF4B // (r/w) window x position + 7
 
 #define BCPS 0xFF68 // (?) background color palette specification (only on gameboy color)
-#define BGPI 0xFF68 // (?) background palette index (same as above) (only on gameboy color)
 #define BCPD 0xFF69 // (?) background color palette data (only on gameboy color)
-#define BGPD 0xFF69 // (?) background palette data (same as above) (only on gameboy color)
 #define OCPS 0xFF6A // (?) object color palette specification (only on gameboy color)
-#define OBPI 0xFF6A // (?) sprite palette index (same as above) (only on gameboy color)
 #define OCPD 0xFF6B // (?) object color palette data (only on gameboy color)
-#define OBPD 0xFF6B // (?) sprite palette data (same as above) (only on gameboy color)
 
 #define PPU_HBLANK_MODE    0 // -> 1
 #define PPU_VBLANK_MODE    1 // -> 2

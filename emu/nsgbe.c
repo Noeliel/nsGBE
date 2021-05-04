@@ -29,6 +29,8 @@ void *rombuffer;
 uintptr_t romsize;
 struct ROM_HEADER *rom_header;
 
+enum GB_MODE gb_mode;
+
 static byte calc_header_checksum(void *rombuffer)
 {
     byte checksum = 0;
@@ -42,7 +44,7 @@ static byte calc_header_checksum(void *rombuffer)
     return checksum;
 }
 
-__always_inline static void free_ptr(void **ptr)
+__always_inline void free_ptr(void **ptr)
 {
     if (*ptr)
     {
@@ -149,15 +151,32 @@ void write_battery()
 
 void system_reset()
 {
-    //if (!bios_load())
-        //return;
-        
     if (!rom_load())
         return;
+        
+    if (rom_header->gbc_flag == 0xC0)
+    {
+        gb_mode = MODE_CGB;
+        
+        printf("This game is a Game Boy Color exclusive.\n");
+        printf("Please note that support for some GBC-specific features is experimental, others are missing completely.\n");
+        printf("Expect breakage.\n");
+    }
+    
+    if (PREFER_CGB_MODE && rom_header->gbc_flag == 0x80)
+        gb_mode = MODE_CGB;
+    
+    // if (!bios_load())
+        // return;
     
     init_memory();
     cpu_reset();
     ppu_reset();
+
+    if (gb_mode == MODE_CGB)
+        fake_cgb_bootrom();
+    else
+        fake_dmg_bootrom();
 }
 
 void system_run_event_loop()

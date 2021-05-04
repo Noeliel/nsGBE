@@ -28,8 +28,12 @@ void *map_to_physical_location(uint16_t offset);
 uint16_t redirect_ram_echo(uint16_t offset);
 void *redirect_to_active_rom_bank(uint16_t offset);
 void *redirect_to_active_cart_ram_bank(uint16_t offset);
+void *redirect_to_active_vram_bank(uint16_t offset);
+void *redirect_to_active_wram_bank(uint16_t offset);
 
 _Bool enable_bootrom = 0;
+byte cgb_extra_vram_bank[0x2000];
+byte cgb_extra_wram_banks[8][0x1000];
 
 __always_inline byte mem_read(uint16_t offset)
 {
@@ -53,7 +57,13 @@ __always_inline byte mem_read(uint16_t offset)
     component_response = mbc_interpret_read(offset);
     if (component_response > 0xFF)
         return (component_response & 0xFF);
-        
+
+    if (gb_mode == MODE_CGB)
+    {
+        if (offset == VBK)
+            return (mem.raw[VBK] | 0xFE);
+    }
+      
     return (* (byte *)map_to_physical_location(offset));
 }
 
@@ -80,10 +90,7 @@ __always_inline void mem_write(uint16_t offset, byte data)
         return;
 
     if (ppu_interpret_write(offset, data) == 0x100)
-    {
-        printf("game tried to write but ppu blocked it\n");
         return;
-    }
     
     if (mbc_interpret_write(offset, data) == 0x100)
         return;
@@ -117,6 +124,15 @@ __always_inline void *map_to_physical_location(uint16_t offset)
     if (offset >= 0xA000 && offset <= 0xBFFF)
         return redirect_to_active_cart_ram_bank(offset - 0xA000);
     
+    if (gb_mode == MODE_CGB)
+    {
+        if (offset >= 0x8000 && offset <= 0x9FFF)
+            return redirect_to_active_vram_bank(offset - 0x8000);
+            
+        if (offset >= 0xD000 && offset <= 0xDFFF)
+            return redirect_to_active_wram_bank(offset - 0xD000);
+    }
+    
     return mem.raw + offset;
 }
 
@@ -138,6 +154,41 @@ __always_inline void *redirect_to_active_rom_bank(uint16_t offset)
 __always_inline void *redirect_to_active_cart_ram_bank(uint16_t offset)
 {
     return ext_ram_banks[active_ext_ram_bank.w] + offset;
+}
+
+__always_inline void *redirect_to_active_vram_bank(uint16_t offset)
+{
+    if (gb_mode != MODE_CGB)
+        return mem.map.video_ram + offset;
+
+    byte selected_vram_bank = mem.raw[VBK] & 0x1;
+
+    switch (selected_vram_bank)
+    {
+        case 1:
+            return cgb_extra_vram_bank + offset;
+            break;
+        
+        default:
+            return mem.map.video_ram + offset;
+            break;
+    }
+}
+
+__always_inline void *redirect_to_active_wram_bank(uint16_t offset)
+{
+    if (gb_mode != MODE_CGB)
+        return mem.map.ram_bank_1 + offset;
+
+    byte selected_wram_bank = mem.raw[0xFF70] & 0x7;
+
+    if (selected_wram_bank == 0)
+        selected_wram_bank = 1;
+    
+    if (selected_wram_bank == 1)
+        return mem.map.ram_bank_1 + offset;
+
+    return cgb_extra_wram_banks[selected_wram_bank] + offset;
 }
 
 void init_memory()
