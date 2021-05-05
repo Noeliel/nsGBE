@@ -1050,16 +1050,36 @@ void hi_test()
 
 __always_inline byte adjust_bg_color_palettes(byte index, byte low, byte high)
 {
+#if EMULATED_CGB_DISPLAY_TONE == 2
     adjusted_bg_color_palettes_r[index] = CACGB_RED(low, high);
     adjusted_bg_color_palettes_g[index] = CACGB_GREEN(low, high);
     adjusted_bg_color_palettes_b[index] = CACGB_BLUE(low, high);
+#elif EMULATED_CGB_DISPLAY_TONE == 1
+    adjusted_bg_color_palettes_r[index] = FCGB_RED(low, high);
+    adjusted_bg_color_palettes_g[index] = FCGB_GREEN(low, high);
+    adjusted_bg_color_palettes_b[index] = FCGB_BLUE(low, high);
+#else
+    adjusted_bg_color_palettes_r[index] = RGB_RED(low, high);
+    adjusted_bg_color_palettes_g[index] = RGB_GREEN(low, high);
+    adjusted_bg_color_palettes_b[index] = RGB_BLUE(low, high);
+#endif
 }
 
 __always_inline byte adjust_obj_color_palettes(byte index, byte low, byte high)
 {
+#if EMULATED_CGB_DISPLAY_TONE == 2
     adjusted_obj_color_palettes_r[index] = CACGB_RED(low, high);
     adjusted_obj_color_palettes_g[index] = CACGB_GREEN(low, high);
     adjusted_obj_color_palettes_b[index] = CACGB_BLUE(low, high);
+#elif EMULATED_CGB_DISPLAY_TONE == 1
+    adjusted_obj_color_palettes_r[index] = FCGB_RED(low, high);
+    adjusted_obj_color_palettes_g[index] = FCGB_GREEN(low, high);
+    adjusted_obj_color_palettes_b[index] = FCGB_BLUE(low, high);
+#else
+    adjusted_obj_color_palettes_r[index] = RGB_RED(low, high);
+    adjusted_obj_color_palettes_g[index] = RGB_GREEN(low, high);
+    adjusted_obj_color_palettes_b[index] = RGB_BLUE(low, high);
+#endif
 }
 
 void ppu_reset()

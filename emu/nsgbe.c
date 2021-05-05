@@ -163,8 +163,10 @@ void system_reset()
         printf("Expect breakage.\n");
     }
     
-    if (PREFER_CGB_MODE && rom_header->gbc_flag == 0x80)
+#if PREFER_CGB_MODE
+    if (rom_header->gbc_flag == 0x80)
         gb_mode = MODE_CGB;
+#endif
     
     // if (!bios_load())
         // return;
