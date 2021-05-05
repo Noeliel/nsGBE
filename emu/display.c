@@ -121,12 +121,50 @@ struct DMG_SPRITE_ATTRIBUTE {
 
 /* CGB stuff */
 
-#define CGB_RED(low, high) ((low & 0x1F) * 0x8)
-#define CGB_GREEN(low, high) ((((low >> 5) | (((high & 0x3) << 3))) & 0x1F) * 0x8)
-#define CGB_BLUE(low, high) (((high >> 2) & 0x1F) * 0x8)
+// pure RGB
+#define RGB_RED(low, high) ((low & 0x1F) * 0x8)
+#define RGB_GREEN(low, high) ((((low >> 5) | (((high & 0x3) << 3))) & 0x1F) * 0x8)
+#define RGB_BLUE(low, high) (((high >> 2) & 0x1F) * 0x8)
 
-byte cgb_bg_color_palettes[0x40];
-byte cgb_obj_color_palettes[0x40];
+// fast RGB -> CGB; method taken from https://gbdev.io/pandocs/#video-display
+#define FCGB_RED(low, high) ((byte)(RGB_RED(low, high) * 0.75f + 0x8) & 0xFF)
+#define FCGB_GREEN(low, high) ((byte)(RGB_GREEN(low, high) * 0.75f + 0x8) & 0xFF)
+#define FCGB_BLUE(low, high) ((byte)(RGB_BLUE(low, high) * 0.75f + 0x8) & 0xFF)
+
+// accurate RGB -> CGB
+// values taken from https://github.com/libretro/glsl-shaders/blob/77697c58448380156a87b251e6461d5ab00071f3/handheld/shaders/color/gbc-color.glsl (source is public domain)
+#define ACGB_r  0.82f
+#define ACGB_gr 0.24f
+#define ACGB_br -0.06f
+
+#define ACGB_rg 0.125f
+#define ACGB_g  0.665f
+#define ACGB_bg 0.21f
+
+#define ACGB_rb 0.195f
+#define ACGB_b  0.73f
+#define ACGB_gb 0.075f
+
+#define ACGB_RED(low, high) (ACGB_r * RGB_RED(low, high) + ACGB_gr * RGB_GREEN(low, high) + ACGB_br * RGB_BLUE(low, high))
+#define ACGB_GREEN(low, high) (ACGB_rg * RGB_RED(low, high) + ACGB_g * RGB_GREEN(low, high) + ACGB_bg * RGB_BLUE(low, high))
+#define ACGB_BLUE(low, high) (ACGB_rb * RGB_RED(low, high) + ACGB_gb * RGB_GREEN(low, high) + ACGB_b * RGB_BLUE(low, high))
+
+// clamped accurate RGB -> CGB (handles overflows and underflows)
+#define CACGB_RED(low, high) ((tmp = ACGB_RED(low, high)) && tmp > 0xFF ? 0xFF : (tmp < 0 ? 0 : (byte)tmp))
+#define CACGB_GREEN(low, high) ((tmp = ACGB_GREEN(low, high)) && tmp > 0xFF ? 0xFF : (tmp < 0 ? 0 : (byte)tmp))
+#define CACGB_BLUE(low, high) ((tmp = ACGB_BLUE(low, high)) && tmp > 0xFF ? 0xFF : (tmp < 0 ? 0 : (byte)tmp))
+
+int16_t tmp;
+
+byte rgb_bg_color_palettes[0x40];
+byte rgb_obj_color_palettes[0x40];
+
+byte adjusted_bg_color_palettes_r[0x20];
+byte adjusted_bg_color_palettes_g[0x20];
+byte adjusted_bg_color_palettes_b[0x20];
+byte adjusted_obj_color_palettes_r[0x20];
+byte adjusted_obj_color_palettes_g[0x20];
+byte adjusted_obj_color_palettes_b[0x20];
 
 union CGB_SPRITE_ATTRIBUTE_FLAGS {
     struct __attribute__((packed)) {
@@ -564,13 +602,15 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
         //printf("color_palette_index: %d\n", color_palette_index);
 
         // * 4 because 4 colors per palette, * 2 because 2 bytes per color
-        byte color_palette_low = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2)];
-        byte color_palette_high = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2) + 1];
+        //byte color_palette_low = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2)];
+        //byte color_palette_high = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2) + 1];
+
+        byte color_index = bg_map_attributes->bg_palette_num * 4 + color_palette_index;
 
         //printf("color_index: %d\n", color_index);
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_BLUE(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_RED(color_palette_low, color_palette_high);
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
         bg_color_indices[pixel_index] = (ppu_regs.lcdc->bg_window_enable_prio ? color_palette_index : 0);
     }
 }
@@ -660,11 +700,15 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         //printf("color_palette_index: %d\n", color_palette_index);
 
         // * 4 because 4 colors per palette, * 2 because 2 bytes per color
-        byte color_palette_low = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2)];
-        byte color_palette_high = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2) + 1];
+        //byte color_palette_low = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2)];
+        //byte color_palette_high = cgb_bg_color_palettes[bg_map_attributes->bg_palette_num * 4 * 2 + (color_palette_index * 2) + 1];
+
+        byte color_index = bg_map_attributes->bg_palette_num * 4 + color_palette_index;
+
+        //printf("color_index: %d\n", color_index);
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_BLUE(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_RED(color_palette_low, color_palette_high);
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
         bg_color_indices[pixel_index] = (ppu_regs.lcdc->bg_window_enable_prio ? color_palette_index : 0);
     }
 }
@@ -728,14 +772,16 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
                     color_palette_index += ((*high >> pixel_color_shift) & 1);
                     color_palette_index += ((*low >> pixel_color_shift) & 1) << 1;
 
-                    byte color_palette_low = cgb_obj_color_palettes[spr_attrs->flags.palette_num * 4 * 2 + (color_palette_index * 2)];
-                    byte color_palette_high = cgb_obj_color_palettes[spr_attrs->flags.palette_num * 4 * 2 + (color_palette_index * 2) + 1];
+                    //byte color_palette_low = cgb_obj_color_palettes[spr_attrs->flags.palette_num * 4 * 2 + (color_palette_index * 2)];
+                    //byte color_palette_high = cgb_obj_color_palettes[spr_attrs->flags.palette_num * 4 * 2 + (color_palette_index * 2) + 1];
+
+                    byte color_index = spr_attrs->flags.palette_num * 4 + color_palette_index;
 
                     uint16_t pixel_index = real_sprite_origin_x + sprite_pixel_index_x + (mem.raw[LY] % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
 
                     // this is not correct -- see pandocs note on sprite priorities and conflicts
                     if (color_palette_index != 0 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))
-                        next_ppu_viewport[pixel_index] = (0xFF << 24) + (CGB_BLUE(color_palette_low, color_palette_high) << 16) + (CGB_GREEN(color_palette_low, color_palette_high) << 8) + CGB_RED(color_palette_low, color_palette_high);
+                        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_obj_color_palettes_b[color_index] << 16) + (adjusted_obj_color_palettes_g[color_index] << 8) + adjusted_obj_color_palettes_r[color_index];
                 }
             }
         }
@@ -1002,6 +1048,20 @@ void hi_test()
     next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
 }
 
+__always_inline byte adjust_bg_color_palettes(byte index, byte low, byte high)
+{
+    adjusted_bg_color_palettes_r[index] = CACGB_RED(low, high);
+    adjusted_bg_color_palettes_g[index] = CACGB_GREEN(low, high);
+    adjusted_bg_color_palettes_b[index] = CACGB_BLUE(low, high);
+}
+
+__always_inline byte adjust_obj_color_palettes(byte index, byte low, byte high)
+{
+    adjusted_obj_color_palettes_r[index] = CACGB_RED(low, high);
+    adjusted_obj_color_palettes_g[index] = CACGB_GREEN(low, high);
+    adjusted_obj_color_palettes_b[index] = CACGB_BLUE(low, high);
+}
+
 void ppu_reset()
 {
     ppu_alive = 1;
@@ -1022,13 +1082,13 @@ __always_inline uint16_t ppu_interpret_read(uint16_t offset)
         if (offset == BCPD)
         {
             color_palette_spec = mem.raw + BCPS;
-            return (0x100 | cgb_bg_color_palettes[color_palette_spec->index]);
+            return (0x100 | rgb_bg_color_palettes[color_palette_spec->index]);
         }
 
         if (offset == OCPD)
         {
             color_palette_spec = mem.raw + OCPS;
-            return (0x100 | cgb_obj_color_palettes[color_palette_spec->index]);
+            return (0x100 | rgb_obj_color_palettes[color_palette_spec->index]);
         }
     }
 
@@ -1063,7 +1123,12 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
         {
             color_palette_spec = mem.raw + BCPS;
             
-            cgb_bg_color_palettes[color_palette_spec->index] = data;
+            rgb_bg_color_palettes[color_palette_spec->index] = data;
+
+            byte low_index = color_palette_spec->index & 0xFE;
+            byte high_index = low_index + 1;
+
+            adjust_bg_color_palettes((low_index / 2), rgb_bg_color_palettes[low_index], rgb_bg_color_palettes[high_index]);
             
             if (color_palette_spec->increment)
                 color_palette_spec->index++;
@@ -1075,7 +1140,12 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
         {
             color_palette_spec = mem.raw + OCPS;
             
-            cgb_obj_color_palettes[color_palette_spec->index] = data;
+            rgb_obj_color_palettes[color_palette_spec->index] = data;
+
+            byte low_index = color_palette_spec->index & 0xFE;
+            byte high_index = low_index + 1;
+
+            adjust_obj_color_palettes((low_index / 2), rgb_obj_color_palettes[low_index], rgb_obj_color_palettes[high_index]);
             
             if (color_palette_spec->increment)
                 color_palette_spec->index++;
