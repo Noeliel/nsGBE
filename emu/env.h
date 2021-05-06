@@ -28,8 +28,8 @@
 
 /*---------------------ENV-----------------------*/
 
-//#define __DEBUG 1
 #ifdef __DEBUG
+extern _Bool single_steps;
 #define DEBUG_PRINT(x) (printf x)
 #else
 #define DEBUG_PRINT(x) ( NULL )

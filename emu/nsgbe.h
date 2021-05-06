@@ -20,6 +20,11 @@
 
 #include <stdint.h>
 
+//#define __DEBUG
+#ifdef __DEBUG
+extern _Bool activate_single_stepping_on_condition;
+#endif
+
 #ifndef __always_inline
 # define __always_inline __inline __attribute__ ((__always_inline__))
 #endif

@@ -47,6 +47,7 @@ uint32_t global_cycle_counter = 0;
 
 #ifdef __DEBUG
 _Bool single_steps = 0; // sort of hacky single-stepping mechanism for debugging
+_Bool activate_single_stepping_on_condition = 0; // toggle-able user key to set single_steps = 1 only if activate_single_stepping_on_condition == 1
 _Bool till_zero = 0;    // flag to continue executing until the zero flag is set
 _Bool till_carry = 0;   // flag to continue executing until the carry flag is set
 #endif
@@ -1073,8 +1074,8 @@ __always_inline uint32_t cpu_step() // advance one op
     }
 
     if (interrupt_master_enable > 1) // may need to do this after the interrupt handler, not before it (but probably not)
-            interrupt_master_enable--;
-
+        interrupt_master_enable--;
+    
     handle_interrupts();
 
     clock_cycle_counter += instr->clock_cycles;
@@ -1095,8 +1096,11 @@ __always_inline int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute)
     {
 
 #ifdef __DEBUG
-        if (cpu_regs.PC == 0x100)
-            single_steps = 1;
+        //if (cpu_regs.PC == 0x100)
+            //single_steps = 1;
+        
+        if (activate_single_stepping_on_condition)
+            printf("A: 0x%02X B: 0x%02X C: 0x%02X D: 0x%02X E: 0x%02X F: 0x%02X H: 0x%02X L: 0x%02X PC: 0x%04X SP: 0x%04X Z: %d N: %d H: %d C: %d\n", cpu_regs.A, cpu_regs.B, cpu_regs.C, cpu_regs.D, cpu_regs.E, cpu_regs.F, cpu_regs.H, cpu_regs.L, cpu_regs.PC, cpu_regs.SP, cpu_regs.F.Z, cpu_regs.F.N, cpu_regs.F.H, cpu_regs.F.C);
         
         if (till_zero && cpu_regs.F.Z == 1)
             single_steps = 1;
@@ -1107,7 +1111,6 @@ __always_inline int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute)
         if (single_steps)
         {
             printf("-Paused-\n");
-            printf("A: 0x%02X B: 0x%02X C: 0x%02X D: 0x%02X E: 0x%02X F: 0x%02X H: 0x%02X L: 0x%02X PC: 0x%04X SP: 0x%04X Z: %d N: %d H: %d C: %d\n", cpu_regs.A, cpu_regs.B, cpu_regs.C, cpu_regs.D, cpu_regs.E, cpu_regs.F, cpu_regs.H, cpu_regs.L, cpu_regs.PC, cpu_regs.SP, cpu_regs.F.Z, cpu_regs.F.N, cpu_regs.F.H, cpu_regs.F.C);
             fgets(input, sizeof(input), stdin);
             if (strcmp(input, "z") == 0)
             {
@@ -1117,6 +1120,12 @@ __always_inline int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute)
             else if (strcmp(input, "c") == 0)
             {
                 till_carry = 1;
+                single_steps = 0;
+            }
+            else if (strcmp(input, "r") == 0)
+            {
+                till_zero = 0;
+                till_carry = 0;
                 single_steps = 0;
             }
             else
@@ -1167,7 +1176,7 @@ __always_inline void handle_interrupts()
         DEBUG_PRINT(("entering lcd stat interrupt\n"));
         return;
     }
-    
+
     if (SHOULD_INT(TIMER))
     {
         // timer interrupt

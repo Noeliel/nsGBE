@@ -127,7 +127,17 @@ static void handleKeyDown(SDL_KeyboardEvent key)
         case SDL_SCANCODE_D:
             button_states.RIGHT = 1;
             break;
+
+#ifdef __DEBUG
+        case SDL_SCANCODE_R:
+            activate_single_stepping_on_condition = 1;
+            break;
         
+        case SDL_SCANCODE_T:
+            activate_single_stepping_on_condition = 0;
+            break;
+#endif
+
         default:
             break;
     }
