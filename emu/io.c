@@ -20,6 +20,7 @@
 
 #include <env.h>
 
+#define IO_SERIAL_CONTROL  0xFF02
 #define IO_BOOTROM_CONTROL 0xFF50
 #define IO_JOYPAD          0xFF00
 #define IO_DIVIDER         0xFF04
@@ -142,6 +143,9 @@ __always_inline uint16_t io_interpret_read(uint16_t offset)
 {
     //if (offset == IO_JOYPAD) // keypad register; todo: better
         //return 0x1FF;
+
+    if (offset == IO_SERIAL_CONTROL)
+        return 0x100;
 
     if (offset >= OAM && offset <= OAM_END && oam_dma_timer > 0)
         return 0x1FF;
