@@ -50,24 +50,24 @@ __always_inline void free_ptr(void **ptr)
 static long file_read(uint8_t **buffer, char *path)
 {
     FILE *fbuf = fopen(path, "rb");
-    
+
     if (!fbuf)
     {
         printf("Error trying to open file: %s\n", path);
         return 0;
     }
-    
+
     fseek(fbuf, 0, SEEK_END);
     long fsize = ftell(fbuf);
     rewind(fbuf);
-    
+
     *buffer = malloc(fsize);
     if (!fread(*buffer, fsize, 1, fbuf))
     {
         printf("Error trying to read file: %s\n", path);
         return 0;
     }
-    
+
     fclose(fbuf);
 
     return fsize;
@@ -81,9 +81,9 @@ static int file_write(char *path, uint8_t *buffer, size_t size)
         printf("Error trying to open file: %s\n", path);
         return 0;
     }
-    
+
     size_t num = fwrite(buffer, size, 1, fbuf);
-    
+
     fclose(fbuf);
 
     EM_ASM_({
@@ -124,7 +124,7 @@ int save_battery(uint8_t *buffer, size_t size)
 
 static void catch_exit(int signal_num)
 {
-    write_battery();    
+    write_battery();
     exit(0);
 }
 

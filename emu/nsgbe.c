@@ -35,12 +35,12 @@ static byte calc_header_checksum(void *rombuffer)
 {
     byte checksum = 0;
     uint32_t offset = 0x0134;
-    
+
     while (offset <= 0x014C)
     {
         checksum = checksum - *(byte *)(rombuffer + (offset++)) - 1;
     }
-    
+
     return checksum;
 }
 
@@ -58,7 +58,7 @@ static int bios_load()
     // load file
 
     free_ptr(&biosbuffer);
-    
+
     biossize = load_bios(&biosbuffer);
 
     if (biossize == 0)
@@ -83,7 +83,7 @@ static int rom_load()
         printf("Failed to load rom file.\n");
         return 0;
     }
-    
+
     rom_header = rombuffer + 0x100;
 
     printf("\n");
@@ -113,7 +113,7 @@ void battery_load(byte **battery_banks, uint16_t bank_count)
     long battery_size;
 
     // load file
-    
+
     battery_size = load_battery(&battery_buffer);
 
     if (battery_size == 0)
@@ -121,11 +121,11 @@ void battery_load(byte **battery_banks, uint16_t bank_count)
         printf("Failed to load battery file.\n");
         return;
     }
-    
+
     for (uint16_t i = 0; i < bank_count; i++)
         for (uint16_t field = 0; field < 0x2000; field++)
             battery_banks[i][field] = ((byte *)battery_buffer)[field + (i * 0x2000)];
-    
+
     free(battery_buffer);
 }
 
@@ -153,24 +153,24 @@ void system_reset()
 {
     if (!rom_load())
         return;
-        
+
     if (rom_header->gbc_flag == 0xC0)
     {
         gb_mode = MODE_CGB;
-        
+
         printf("This game is a Game Boy Color exclusive.\n");
         printf("Please note that support for some GBC-specific features is experimental, others are missing completely.\n");
         printf("Expect breakage.\n");
     }
-    
+
 #if PREFER_CGB_MODE
     if (rom_header->gbc_flag == 0x80)
         gb_mode = MODE_CGB;
 #endif
-    
+
     // if (!bios_load())
         // return;
-    
+
     init_memory();
     cpu_reset();
     ppu_reset();

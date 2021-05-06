@@ -89,7 +89,7 @@ void vblank()
             cairo_fill(cr);
         }
     }
-    
+
     cairo_destroy(cr);
 }
 
@@ -97,7 +97,7 @@ static gboolean setup_draw_surface(GtkWidget *widget, GdkEventConfigure *event, 
 {
     if (surface)
         cairo_surface_destroy(surface);
-    
+
     surface = gdk_window_create_similar_surface(gtk_widget_get_window(widget), CAIRO_CONTENT_COLOR, gtk_widget_get_allocated_width(widget), gtk_widget_get_allocated_height(widget));
     clear_surface();
 
@@ -190,35 +190,35 @@ static gint handle_key_press(GtkWidget *widget, GdkEventKey *event, gpointer dat
         case KEY_K:
             button_states.A = 1;
             break;
-        
+
         case KEY_O:
             button_states.B = 1;
             break;
-        
+
         case KEY_L:
             button_states.START = 1;
             break;
-        
+
         case KEY_P:
             button_states.SELECT = 1;
             break;
-        
+
         case KEY_W:
             button_states.UP = 1;
             break;
-        
+
         case KEY_S:
             button_states.DOWN = 1;
             break;
-        
+
         case KEY_A:
             button_states.LEFT = 1;
             break;
-        
+
         case KEY_D:
             button_states.RIGHT = 1;
             break;
-        
+
         default:
             break;
     }
@@ -238,35 +238,35 @@ static gint handle_key_release(GtkWidget *widget, GdkEventKey *event, gpointer d
         case KEY_K:
             button_states.A = 0;
             break;
-        
+
         case KEY_O:
             button_states.B = 0;
             break;
-        
+
         case KEY_L:
             button_states.START = 0;
             break;
-        
+
         case KEY_P:
             button_states.SELECT = 0;
             break;
-        
+
         case KEY_W:
             button_states.UP = 0;
             break;
-        
+
         case KEY_S:
             button_states.DOWN = 0;
             break;
-        
+
         case KEY_A:
             button_states.LEFT = 0;
             break;
-        
+
         case KEY_D:
             button_states.RIGHT = 0;
             break;
-        
+
         default:
             break;
     }
@@ -287,7 +287,7 @@ static void activate(GtkApplication* app, gpointer user_data)
 
     display = gtk_drawing_area_new();
     gtk_widget_set_size_request(display, GB_FRAMEBUFFER_WIDTH * SCREEN_SCALE, GB_FRAMEBUFFER_HEIGHT * SCREEN_SCALE);
-    
+
     g_signal_connect(display, "configure-event", G_CALLBACK(setup_draw_surface), NULL);
     g_signal_connect(display, "draw", G_CALLBACK(redraw_display), NULL);
 

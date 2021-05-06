@@ -60,7 +60,7 @@ void copy_to_canvas(uint32_t *buffer, int w, int h)
 {
     EM_ASM_({
         let data = Module.HEAPU8.slice($0, $0 + $1 * $2 * 4);
-        
+
         let smallCanvas = document.getElementById("smallcanvas");
         let smallContext = smallCanvas.getContext("2d");
         let imageData = smallContext.getImageData(0, 0, $1, $2);
@@ -117,35 +117,35 @@ static void handleKeyDown(SDL_KeyboardEvent key)
         case SDL_SCANCODE_K:
             button_states.A = 1;
             break;
-        
+
         case SDL_SCANCODE_O:
             button_states.B = 1;
             break;
-        
+
         case SDL_SCANCODE_L:
             button_states.START = 1;
             break;
-        
+
         case SDL_SCANCODE_P:
             button_states.SELECT = 1;
             break;
-        
+
         case SDL_SCANCODE_W:
             button_states.UP = 1;
             break;
-        
+
         case SDL_SCANCODE_S:
             button_states.DOWN = 1;
             break;
-        
+
         case SDL_SCANCODE_A:
             button_states.LEFT = 1;
             break;
-        
+
         case SDL_SCANCODE_D:
             button_states.RIGHT = 1;
             break;
-        
+
         default:
             break;
     }
@@ -162,39 +162,39 @@ static void handleKeyUp(SDL_KeyboardEvent key)
         case SDL_SCANCODE_K:
             button_states.A = 0;
             break;
-        
+
         case SDL_SCANCODE_O:
             button_states.B = 0;
             break;
-        
+
         case SDL_SCANCODE_L:
             button_states.START = 0;
             break;
-        
+
         case SDL_SCANCODE_P:
             button_states.SELECT = 0;
             break;
-        
+
         case SDL_SCANCODE_W:
             button_states.UP = 0;
             break;
-        
+
         case SDL_SCANCODE_S:
             button_states.DOWN = 0;
             break;
-        
+
         case SDL_SCANCODE_A:
             button_states.LEFT = 0;
             break;
-        
+
         case SDL_SCANCODE_D:
             button_states.RIGHT = 0;
             break;
-        
+
         case SDL_SCANCODE_B:
             write_battery();
             break;
-        
+
         default:
             break;
     }
@@ -216,10 +216,10 @@ void sdl_renderloop()
         {
             if (e.type == SDL_QUIT)
                 quit = 1;
-                
+
             if (e.type == SDL_KEYDOWN)
                 handleKeyDown(e.key);
-                
+
             if (e.type == SDL_KEYUP)
                 handleKeyUp(e.key);
         }

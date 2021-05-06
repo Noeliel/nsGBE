@@ -47,7 +47,7 @@ uint16_t mbc5_interpret_write(uint16_t offset, byte data)
             printf("error: selected rombank (0x%04X) oob (have 0x%04X)\n", active_rom_bank.w, rom_bank_count);
             cpu_break();
         }
-    
+
         return 0x100;
     }
 
@@ -56,7 +56,7 @@ uint16_t mbc5_interpret_write(uint16_t offset, byte data)
         // switch ROM bank (9th bit)
 
         active_rom_bank.w = ((active_rom_bank.w & 0x00FF) + ((data & 1) << 8));
-    
+
         if (active_rom_bank.w >= rom_bank_count)
         {
             printf("error: selected rombank (0x%04X) oob (have 0x%04X)\n", active_rom_bank.w, rom_bank_count);
@@ -83,15 +83,15 @@ uint16_t mbc5_interpret_write(uint16_t offset, byte data)
 }
 
 uint16_t mbc5_interpret_read(uint16_t offset)
-{    
-    return 0;   
+{
+    return 0;
 }
 
 uint32_t mbc5_setup()
 {
     for (uint16_t i = 1; i < ext_ram_bank_count; i++)
         free_ptr(&ext_ram_banks[i]);
-    
+
     free_ptr(&ext_ram_banks);
 
     active_mbc_writes_interpreter = &mbc5_interpret_write;

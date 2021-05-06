@@ -571,7 +571,7 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
         tile_offset += (16 * bg_tile_index);
 
         byte *tile_ptr = 0;
-        
+
         if (bg_map_attributes->vram_bank == 1)
             tile_ptr = cgb_extra_vram_bank + tile_offset;
         else
@@ -669,7 +669,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         tile_offset += (16 * window_tile_index);
 
         byte *tile_ptr = 0;
-        
+
         if (bg_map_attributes->vram_bank == 1)
             tile_ptr = cgb_extra_vram_bank + tile_offset;
         else
@@ -751,7 +751,7 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
                     tile_offset += ((2 * 8) * sprite_tile_index);
 
                     byte *tile_ptr = 0;
-                    
+
                     if (spr_attrs->flags.vram_bank == 1)
                         tile_ptr = cgb_extra_vram_bank + tile_offset;
                     else
@@ -800,7 +800,7 @@ __always_inline static void render_scanline()
 
         if (ppu_regs.lcdc->window_enable)
             draw_window_line_cgb(line);
-        
+
         if (!ppu_regs.lcdc->bg_window_enable_prio)
             for (byte x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
             {
@@ -816,7 +816,7 @@ __always_inline static void render_scanline()
         if (ppu_regs.lcdc->bg_window_enable_prio)
         {
             draw_background_line_dmg(line);
-        
+
             if (ppu_regs.lcdc->window_enable && WINDOW_VISIBLE)
                 draw_window_line_dmg(line);
         }
@@ -827,7 +827,7 @@ __always_inline static void render_scanline()
                 next_ppu_viewport[pixel_index] = 0xFFFFFFFF;
                 bg_color_indices[pixel_index] = 0;
             }
-        
+
         if (ppu_regs.lcdc->obj_enable)
             draw_sprites_line_dmg(line);
     }
@@ -841,7 +841,7 @@ __always_inline static void oam_read()
 
         // do oam read stuff
     }
-    
+
     ppu_clock_cycle_counter++;
 }
 
@@ -873,7 +873,7 @@ __always_inline static void hblank()
         if ((ppu_regs.stat->lyc_eq_ly || ppu_regs.stat->hblank_int) && mem.map.interrupt_enable_reg.LCD_STAT)
             mem.map.interrupt_flag_reg.LCD_STAT = 1;
     }
-    
+
     ppu_clock_cycle_counter++;
 }
 
@@ -901,11 +901,11 @@ __always_inline static void vblank()
         //printf("drawing frame\n");
         if (display_notify_vblank)
             display_notify_vblank();
-        
+
         if (mem.map.interrupt_enable_reg.VBLANK)
             mem.map.interrupt_flag_reg.VBLANK = 1;
     }
-    
+
     ppu_clock_cycle_counter++;
 }
 
@@ -919,28 +919,28 @@ __always_inline void ppu_step()
             did_vblank = 0;
             oam_read();
             break;
-        
+
         case PPU_VRAM_READ_MODE:
             did_oam_read = 0;
             did_hblank = 0;
             did_vblank = 0;
             vram_read();
             break;
-        
+
         case PPU_HBLANK_MODE:
             did_oam_read = 0;
             did_vram_read = 0;
             did_vblank = 0;
             hblank();
             break;
-        
+
         case PPU_VBLANK_MODE:
             did_oam_read = 0;
             did_vram_read = 0;
             did_hblank = 0;
             vblank();
             break;
-        
+
         default:
             break;
     }
@@ -1126,7 +1126,7 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
             DEBUG_PRINT(("ppu blocking mistimed oam write\n"));
             return 0x100;
         }
-    
+
     if (gb_mode != MODE_CGB)
     {
         if (offset >= BCPD && offset <= OCPD) // we can't write here during vram read mode (3)
@@ -1136,20 +1136,20 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
                 return 0x100;
             }
     }
-    
+
     if (gb_mode == MODE_CGB)
     {
         if (offset == BCPD)
         {
             color_palette_spec = mem.raw + BCPS;
-            
+
             rgb_bg_color_palettes[color_palette_spec->index] = data;
 
             byte low_index = color_palette_spec->index & 0xFE;
             byte high_index = low_index + 1;
 
             adjust_bg_color_palettes((low_index / 2), rgb_bg_color_palettes[low_index], rgb_bg_color_palettes[high_index]);
-            
+
             if (color_palette_spec->increment)
                 color_palette_spec->index++;
 
@@ -1159,20 +1159,20 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
         if (offset == OCPD)
         {
             color_palette_spec = mem.raw + OCPS;
-            
+
             rgb_obj_color_palettes[color_palette_spec->index] = data;
 
             byte low_index = color_palette_spec->index & 0xFE;
             byte high_index = low_index + 1;
 
             adjust_obj_color_palettes((low_index / 2), rgb_obj_color_palettes[low_index], rgb_obj_color_palettes[high_index]);
-            
+
             if (color_palette_spec->increment)
                 color_palette_spec->index++;
 
             return 0x100;
         }
     }
-    
+
     return 0;
 }

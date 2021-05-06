@@ -195,10 +195,10 @@
                                 <td>B</td>
                                 <td>Manually persist save data</td>
                             </tr>
-                        </table> 
+                        </table>
                     </td>
                 </tr>
-            </table> 
+            </table>
         </div>
         <textarea id=output rows=8 spellcheck="false"></textarea>
         <br>
@@ -215,7 +215,7 @@
         <script>
 
             function loadFile(input) {
-                var file = input.files[0]; 
+                var file = input.files[0];
                 var reader = new FileReader();
                 reader.readAsArrayBuffer(file);
                 reader.onload = readerEvent => {
@@ -281,7 +281,7 @@
                             progressElement.value = null,
                             progressElement.max = null,
                             progressElement.hidden = !0,
-                            e                        
+                            e
                         ),
                         statusElement.innerHTML = e)
                     }

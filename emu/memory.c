@@ -39,7 +39,7 @@ __always_inline byte mem_read(uint16_t offset)
 {
     // < 0x100: continue; 0x1XX: return XX
     uint16_t component_response = 0;
-    
+
     offset &= 0xFFFF;
 
     component_response = io_interpret_read(offset);
@@ -63,7 +63,7 @@ __always_inline byte mem_read(uint16_t offset)
         if (offset == VBK)
             return (mem.raw[VBK] | 0xFE);
     }
-      
+
     return (* (byte *)map_to_physical_location(offset));
 }
 
@@ -74,7 +74,7 @@ __always_inline word mem_read_16(uint16_t offset) // simulating little endian by
 
     byte low = mem_read(offset);
     byte high = mem_read(offset + 1);
-    
+
     word data;
     data.b.l = low;
     data.b.h = high;
@@ -91,13 +91,13 @@ __always_inline void mem_write(uint16_t offset, byte data)
 
     if (ppu_interpret_write(offset, data) == 0x100)
         return;
-    
+
     if (mbc_interpret_write(offset, data) == 0x100)
         return;
-    
+
     if (offset <= 0x7FFF) // don't allow writing to rom
         return;
-    
+
     (* (byte *)map_to_physical_location(offset)) = data;
 }
 
@@ -105,7 +105,7 @@ __always_inline void mem_write_16(uint16_t offset, word data) // simulating litt
 {
     if (offset > 0xFFFE)
         offset = 0xFFFE;
-    
+
     mem_write(offset, data.b.l);
     mem_write(offset + 1, data.b.h);
 }
@@ -120,19 +120,19 @@ __always_inline void *map_to_physical_location(uint16_t offset)
 
     if (offset >= 0x4000 && offset <= 0x7FFF)
         return redirect_to_active_rom_bank(offset - 0x4000);
-    
+
     if (offset >= 0xA000 && offset <= 0xBFFF)
         return redirect_to_active_cart_ram_bank(offset - 0xA000);
-    
+
     if (gb_mode == MODE_CGB)
     {
         if (offset >= 0x8000 && offset <= 0x9FFF)
             return redirect_to_active_vram_bank(offset - 0x8000);
-            
+
         if (offset >= 0xD000 && offset <= 0xDFFF)
             return redirect_to_active_wram_bank(offset - 0xD000);
     }
-    
+
     return mem.raw + offset;
 }
 
@@ -140,7 +140,7 @@ __always_inline uint16_t redirect_ram_echo(uint16_t offset)
 {
     if (offset >= 0xE000 && offset <= 0xFDFF)
         offset -= 0x2000;
-    
+
     return offset;
 }
 
@@ -168,7 +168,7 @@ __always_inline void *redirect_to_active_vram_bank(uint16_t offset)
         case 1:
             return cgb_extra_vram_bank + offset;
             break;
-        
+
         default:
             return mem.map.video_ram + offset;
             break;
@@ -184,7 +184,7 @@ __always_inline void *redirect_to_active_wram_bank(uint16_t offset)
 
     if (selected_wram_bank == 0)
         selected_wram_bank = 1;
-    
+
     if (selected_wram_bank == 1)
         return mem.map.ram_bank_1 + offset;
 

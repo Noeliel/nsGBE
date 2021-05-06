@@ -99,31 +99,31 @@ static void handleKeyDown(SDL_KeyboardEvent key)
         case SDL_SCANCODE_K:
             button_states.A = 1;
             break;
-        
+
         case SDL_SCANCODE_O:
             button_states.B = 1;
             break;
-        
+
         case SDL_SCANCODE_L:
             button_states.START = 1;
             break;
-        
+
         case SDL_SCANCODE_P:
             button_states.SELECT = 1;
             break;
-        
+
         case SDL_SCANCODE_W:
             button_states.UP = 1;
             break;
-        
+
         case SDL_SCANCODE_S:
             button_states.DOWN = 1;
             break;
-        
+
         case SDL_SCANCODE_A:
             button_states.LEFT = 1;
             break;
-        
+
         case SDL_SCANCODE_D:
             button_states.RIGHT = 1;
             break;
@@ -132,7 +132,7 @@ static void handleKeyDown(SDL_KeyboardEvent key)
         case SDL_SCANCODE_R:
             activate_single_stepping_on_condition = 1;
             break;
-        
+
         case SDL_SCANCODE_T:
             activate_single_stepping_on_condition = 0;
             break;
@@ -154,35 +154,35 @@ static void handleKeyUp(SDL_KeyboardEvent key)
         case SDL_SCANCODE_K:
             button_states.A = 0;
             break;
-        
+
         case SDL_SCANCODE_O:
             button_states.B = 0;
             break;
-        
+
         case SDL_SCANCODE_L:
             button_states.START = 0;
             break;
-        
+
         case SDL_SCANCODE_P:
             button_states.SELECT = 0;
             break;
-        
+
         case SDL_SCANCODE_W:
             button_states.UP = 0;
             break;
-        
+
         case SDL_SCANCODE_S:
             button_states.DOWN = 0;
             break;
-        
+
         case SDL_SCANCODE_A:
             button_states.LEFT = 0;
             break;
-        
+
         case SDL_SCANCODE_D:
             button_states.RIGHT = 0;
             break;
-        
+
         default:
             break;
     }
@@ -211,10 +211,10 @@ int gui_main(int argc, char **argv)
         {
             if (e.type == SDL_QUIT)
                 quit = 1;
-            
+
             if (e.type == SDL_KEYDOWN)
                 handleKeyDown(e.key);
-            
+
             if (e.type == SDL_KEYUP)
                 handleKeyUp(e.key);
         }

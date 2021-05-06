@@ -75,7 +75,7 @@ __always_inline void oam_dma_transfer()
     {
         word source = word(0x0000);
         source.b.h = dma_byte;
-    
+
         byte i = 0xA0 - (oam_dma_timer / IO_TICKS_PER_MACHINE_CLOCK);
         mem.map.sprite_attr_table[i] = mem_read(source.w + i);
     }
@@ -86,10 +86,10 @@ __always_inline void oam_dma_transfer()
 __always_inline void vram_dma_transfer()
 {
     if (vram_dma_timer % IO_TICKS_PER_MACHINE_CLOCK == 0)
-    {    
+    {
         uint16_t i = vram_dma_length - (vram_dma_timer / IO_TICKS_PER_MACHINE_CLOCK);
         mem_write(cgb_dma_destination + i, mem_read(cgb_dma_source + i));
-        
+
         byte remaining = 0xFF - ((vram_dma_length - (i + 1)) & 0xFF);
         cgb_dma_reg->type = remaining;
     }
@@ -124,12 +124,12 @@ __always_inline static void encode_joypad_byte(byte data)
     }
     else
         jp->b = 0xFF;
-    
+
     jp->unused = 3;
 }
 
 __always_inline static void sync_button_states()
-{    
+{
     if (unencoded_button_state.b != button_states.b)
         if (mem.map.interrupt_enable_reg.JOYPAD)
             mem.map.interrupt_flag_reg.JOYPAD = 1;
@@ -149,7 +149,7 @@ __always_inline uint16_t io_interpret_read(uint16_t offset)
 
     if (offset >= OAM && offset <= OAM_END && oam_dma_timer > 0)
         return 0x1FF;
-    
+
     return 0;
 }
 
@@ -158,7 +158,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
     if (offset == IO_BOOTROM_CONTROL)
         if (data > 0)
             enable_bootrom = 0;
-    
+
     if (offset == DMA)
     {
         if (oam_dma_timer == 0)
@@ -169,7 +169,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
         else
             return 0x100;
     }
-    
+
     if (offset == IO_JOYPAD)
     {
         encode_joypad_byte(data);
@@ -181,7 +181,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
         mem.raw[IO_DIVIDER] = 0;
         return 0x100;
     }
-    
+
     if (offset == IO_TIMER)
     {
         mem.raw[IO_TIMER] = 0;
@@ -208,7 +208,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
                 {
                     active_dma_is_hblank = 1;
                 }
-                
+
                 vram_dma_length = ((cgb_dma_reg->transfer_length + 1) * 0x10);
                 vram_dma_timer = vram_dma_length * IO_TICKS_PER_MACHINE_CLOCK;
             }
@@ -218,7 +218,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
                 {
                     vram_dma_timer = 0;
                     cgb_dma_reg->type = 1;
-                    
+
                     return 0x100;
                 }
             }
@@ -248,7 +248,7 @@ __always_inline void io_timer_step()
         case 0: // 4096 Hz
             timer_threshold = 1024;
             break;
-        
+
         case 1: // 262144 Hz
             timer_threshold = 16;
             break;
@@ -263,7 +263,7 @@ __always_inline void io_timer_step()
 
         default:
             timer_threshold = 0xFFFFFFFF;
-            break;    
+            break;
     }
 
     if (timer_counter > timer_threshold)
@@ -275,7 +275,7 @@ __always_inline void io_timer_step()
         if (timer_reg > 0xFF)
         {
             mem.raw[IO_TIMER] = mem.raw[IO_TIMER_MOD];
-            
+
             if (mem.map.interrupt_enable_reg.TIMER)
                 mem.map.interrupt_flag_reg.TIMER = 1;
         }
@@ -288,7 +288,7 @@ __always_inline void io_step()
 {
     if (oam_dma_timer > 0)
         oam_dma_transfer();
-    
+
     divider_counter++;
 
     if (divider_counter > 256)
@@ -318,7 +318,7 @@ __always_inline void io_step()
                         vram_dma_hblank_timer += (remaining_bytes < 0x10 ? remaining_bytes : 0x10) * IO_TICKS_PER_MACHINE_CLOCK;
                         did_transfer_during_current_hblank = 1;
                     }
-                    
+
                     if (vram_dma_hblank_timer > 0)
                     {
                         cpu_dma_halt = 1;
@@ -341,7 +341,7 @@ __always_inline void io_step()
                 }
             }
         }
-    }    
+    }
 
     //if (mem.raw[IO_TIMER] < old)
         //mem.map.interrupt_flag_reg.TIMER = 1;
