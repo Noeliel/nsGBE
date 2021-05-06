@@ -192,9 +192,26 @@ __always_inline void *redirect_to_active_wram_bank(uint16_t offset)
 }
 
 void init_memory()
-{    
-    for (uint32_t i = 0; i < 0x10000; i++)
-        mem.raw[i] = 0xFF;
+{
+    memset(mem.map.rom_bank, 0xFF, 0x4000);
+    memset(mem.map.rom_bank_s, 0xFF, 0x4000);
+    memset(mem.map.video_ram, 0x00, 0x2000);
+    memset(cgb_extra_vram_bank, 0x00, 0x2000);
+    memset(mem.map.cart_ram_bank_s, 0x00, 0x2000);
+    memset(mem.map.ram_bank_0, 0x00, 0x1000);
+    memset(mem.map.ram_bank_1, 0x00, 0x1000);
+    memset(mem.map.undefined, 0x00, 0x1E00);
+
+    for (int i = 0; i < 8; i++)
+        memset(cgb_extra_wram_banks[i], 0x00, 0x1000);
+
+    memset(mem.map.sprite_attr_table, 0x00, 0xA0);
+    memset(mem.map.prohibited, 0xFF, 0x60);
+    memset(mem.map.dev_maps1, 0xFF, 0xF);
+    mem.map.interrupt_flag_reg.b = 0x00;
+    memset(mem.map.dev_maps2, 0xFF, 0x70);
+    memset(mem.map.high_ram, 0x00, 0x7F);
+    mem.map.interrupt_enable_reg.b = 0x00;
 
     ext_chip_setup();
 

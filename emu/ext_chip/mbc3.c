@@ -114,7 +114,10 @@ uint32_t mbc3_setup()
     ext_ram_banks[0] = mem.map.cart_ram_bank_s;
 
     for (uint16_t i = 1; i < ext_ram_bank_count; i++)
+    {
         ext_ram_banks[i] = malloc(0x2000);
+        memset(ext_ram_banks[i], 0x00, 0x2000);
+    }
 
     ext_ram_enabled = 1;
     active_ext_ram_bank.w = 0;
