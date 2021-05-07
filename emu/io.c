@@ -131,8 +131,7 @@ __always_inline static void encode_joypad_byte(byte data)
 __always_inline static void sync_button_states()
 {
     if (unencoded_button_state.b != button_states.b)
-        if (mem.map.interrupt_enable_reg.JOYPAD)
-            mem.map.interrupt_flag_reg.JOYPAD = 1;
+        mem.map.interrupt_flag_reg.JOYPAD = 1;
 
     unencoded_button_state.b = button_states.b;
 
@@ -276,8 +275,7 @@ __always_inline void io_timer_step()
         {
             mem.raw[IO_TIMER] = mem.raw[IO_TIMER_MOD];
 
-            if (mem.map.interrupt_enable_reg.TIMER)
-                mem.map.interrupt_flag_reg.TIMER = 1;
+            mem.map.interrupt_flag_reg.TIMER = 1;
         }
         else
             mem.raw[IO_TIMER] = timer_reg;
