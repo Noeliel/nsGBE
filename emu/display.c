@@ -636,7 +636,16 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
         next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
-        bg_color_indices[pixel_index] = (ppu_regs.lcdc->bg_window_enable_prio ? color_palette_index : 0);
+
+        if (ppu_regs.lcdc->bg_window_enable_prio)
+        {
+            if (bg_map_attributes->bg_to_oam_prio)
+                bg_color_indices[pixel_index] = 4;
+            else
+                bg_color_indices[pixel_index] = color_palette_index;
+        }
+        else
+            bg_color_indices[pixel_index] = 5;
     }
 }
 
@@ -736,7 +745,16 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
         next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
-        bg_color_indices[pixel_index] = (ppu_regs.lcdc->bg_window_enable_prio ? color_palette_index : 0);
+
+        if (ppu_regs.lcdc->bg_window_enable_prio)
+        {
+            if (bg_map_attributes->bg_to_oam_prio)
+                bg_color_indices[pixel_index] = 4;
+            else
+                bg_color_indices[pixel_index] = color_palette_index;
+        }
+        else
+            bg_color_indices[pixel_index] = 5;
     }
 
     window_interal_line_counter++;
@@ -826,7 +844,7 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
                     uint16_t pixel_index = real_sprite_origin_x + sprite_pixel_index_x + (mem.raw[LY] % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
 
                     // this is not correct -- see pandocs note on sprite priorities and conflicts
-                    if (color_palette_index != 0 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))
+                    if (color_palette_index != 0 && (bg_color_indices[pixel_index] == 5 || (bg_color_indices[pixel_index] != 4 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))))
                         next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_obj_color_palettes_b[color_index] << 16) + (adjusted_obj_color_palettes_g[color_index] << 8) + adjusted_obj_color_palettes_r[color_index];
                 }
             }
