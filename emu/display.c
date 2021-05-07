@@ -484,7 +484,25 @@ __always_inline static void draw_sprites_line_dmg(uint8_t line)
                     byte sprite_tile_index = spr_attrs->tile_index;
 
                     if (ppu_regs.lcdc->obj_size)
-                        sprite_tile_index &= 0xFE;
+                    {
+                        // for y-flipping
+                        if (spr_attrs->flags.y_flip)
+                            sprite_pixel_index_y = 15 - sprite_pixel_index_y;
+
+                        if (sprite_pixel_index_y < 8)
+                            sprite_tile_index &= 0xFE;
+                        else
+                        {
+                            sprite_pixel_index_y -= 8;
+                            sprite_tile_index |= 0x01;
+                        }
+                    }
+                    else
+                    {
+                        // for y-flipping
+                        if (spr_attrs->flags.y_flip)
+                            sprite_pixel_index_y = 7 - sprite_pixel_index_y;
+                    }
 
                     uint16_t tile_offset = (sprite_tile_index <= 127 ? sprite_data_base_block_0 : sprite_data_base_block_1);
 
@@ -494,10 +512,6 @@ __always_inline static void draw_sprites_line_dmg(uint8_t line)
                     tile_offset += ((2 * 8) * sprite_tile_index);
 
                     byte *tile_ptr = mem.raw + tile_offset;
-
-                    // for y-flipping
-                    if (spr_attrs->flags.y_flip)
-                        sprite_pixel_index_y = 7 - sprite_pixel_index_y;
 
                     byte *high = (tile_ptr + sprite_pixel_index_y * 2);
                     byte *low = (tile_ptr + sprite_pixel_index_y * 2 + 1);
@@ -759,7 +773,25 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
                     byte sprite_tile_index = spr_attrs->tile_index;
 
                     if (ppu_regs.lcdc->obj_size)
-                        sprite_tile_index &= 0xFE;
+                    {
+                        // for y-flipping
+                        if (spr_attrs->flags.y_flip)
+                            sprite_pixel_index_y = 15 - sprite_pixel_index_y;
+
+                        if (sprite_pixel_index_y < 8)
+                            sprite_tile_index &= 0xFE;
+                        else
+                        {
+                            sprite_pixel_index_y -= 8;
+                            sprite_tile_index |= 0x01;
+                        }
+                    }
+                    else
+                    {
+                        // for y-flipping
+                        if (spr_attrs->flags.y_flip)
+                            sprite_pixel_index_y = 7 - sprite_pixel_index_y;
+                    }
 
                     uint16_t tile_offset = (sprite_tile_index <= 127 ? sprite_data_base_block_0 : sprite_data_base_block_1);
 
@@ -774,10 +806,6 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
                         tile_ptr = cgb_extra_vram_bank + tile_offset;
                     else
                         tile_ptr = mem.map.video_ram + tile_offset;
-
-                    // for y-flipping
-                    if (spr_attrs->flags.y_flip)
-                        sprite_pixel_index_y = 7 - sprite_pixel_index_y;
 
                     byte *high = (tile_ptr + sprite_pixel_index_y * 2);
                     byte *low = (tile_ptr + sprite_pixel_index_y * 2 + 1);
@@ -818,13 +846,6 @@ __always_inline static void render_scanline()
 
         if (ppu_regs.lcdc->window_enable)
             draw_window_line_cgb(line);
-
-        if (!ppu_regs.lcdc->bg_window_enable_prio)
-            for (byte x = 0; x < GB_FRAMEBUFFER_WIDTH; x++)
-            {
-                uint16_t pixel_index = x + (mem.raw[LY] % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-                bg_color_indices[pixel_index] = 0;
-            }
 
         if (ppu_regs.lcdc->obj_enable)
             draw_sprites_line_cgb(line);
