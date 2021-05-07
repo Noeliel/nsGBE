@@ -27,6 +27,7 @@
 // -> this may fail some tests, but it should be good enough for most games
 
 #include <env.h>
+#include <pthread.h>
 
 #define WINDOW_VISIBLE  ((int8_t)mem.raw[WY] >= 0 && \
                          (int8_t)mem.raw[WX] >= 0 && \
@@ -68,7 +69,7 @@ uint32_t *active_display_viewport = view_port_1;
 uint32_t *next_display_viewport = view_port_2;
 uint32_t *next_ppu_viewport = view_port_3;
 
-_Bool swapping_buffers = 0;
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 _Bool new_frame_available = 0;
 
 byte bg_color_indices[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT]; // which palette index a pixel had for transparency / blending
@@ -245,10 +246,7 @@ uint32_t *display_request_next_frame()
 {
     if (new_frame_available)
     {
-        while (swapping_buffers)
-        { printf(""); }
-
-        swapping_buffers = 1;
+        pthread_mutex_lock(&mtx);
 
         uint32_t *tmp = next_display_viewport;
         next_display_viewport = active_display_viewport;
@@ -256,7 +254,7 @@ uint32_t *display_request_next_frame()
 
         new_frame_available = 0;
 
-        swapping_buffers = 0;
+        pthread_mutex_unlock(&mtx);
     }
 
     return active_display_viewport;
@@ -903,10 +901,7 @@ __always_inline static void vblank()
 
         // do vblank stuff
 
-        while (swapping_buffers)
-        { usleep(1); }
-
-        swapping_buffers = 1;
+        pthread_mutex_lock(&mtx);
 
         uint32_t *tmp = next_ppu_viewport;
         next_ppu_viewport = next_display_viewport;
@@ -914,7 +909,7 @@ __always_inline static void vblank()
 
         new_frame_available = 1;
 
-        swapping_buffers = 0;
+        pthread_mutex_unlock(&mtx);
 
         //printf("drawing frame\n");
         if (display_notify_vblank)
