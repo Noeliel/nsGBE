@@ -199,7 +199,7 @@ void init_memory()
     memset(cgb_extra_vram_bank, 0x00, 0x2000);
     memset(mem.map.cart_ram_bank_s, 0x00, 0x2000);
     memset(mem.map.ram_bank_0, 0x00, 0x1000);
-    memset(mem.map.ram_bank_1, 0x00, 0x1000);
+    memset(mem.map.ram_bank_1, 0x00, 0x1000); // pkmn tcg needs 0s here
     memset(mem.map.undefined, 0x00, 0x1E00);
 
     for (int i = 0; i < 8; i++)
@@ -210,7 +210,7 @@ void init_memory()
     memset(mem.map.dev_maps1, 0xFF, 0xF);
     mem.map.interrupt_flag_reg.b = 0x00;
     memset(mem.map.dev_maps2, 0xFF, 0x70);
-    memset(mem.map.high_ram, 0x00, 0x7F);
+    memset(mem.map.high_ram, 0xFF, 0x7F); // smb deluxe is stuck on black screen with 0s in here, so we init with 1s
     mem.map.interrupt_enable_reg.b = 0x00;
 
     ext_chip_setup();
