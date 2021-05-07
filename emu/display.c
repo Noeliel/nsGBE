@@ -481,6 +481,9 @@ __always_inline static void draw_sprites_line_dmg(uint8_t line)
 
                     byte sprite_tile_index = spr_attrs->tile_index;
 
+                    if (ppu_regs.lcdc->obj_size)
+                        sprite_tile_index &= 0xFE;
+
                     uint16_t tile_offset = (sprite_tile_index <= 127 ? sprite_data_base_block_0 : sprite_data_base_block_1);
 
                     if (sprite_tile_index > 127)
@@ -752,6 +755,9 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
                     byte sprite_pixel_index_y = line - real_sprite_origin_y;
 
                     byte sprite_tile_index = spr_attrs->tile_index;
+
+                    if (ppu_regs.lcdc->obj_size)
+                        sprite_tile_index &= 0xFE;
 
                     uint16_t tile_offset = (sprite_tile_index <= 127 ? sprite_data_base_block_0 : sprite_data_base_block_1);
 
