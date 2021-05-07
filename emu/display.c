@@ -80,6 +80,8 @@ _Bool did_vram_read = 0;
 _Bool did_hblank = 0;
 _Bool did_vblank = 0;
 
+uint8_t window_interal_line_counter = 0;
+
 /* DMG stuff */
 
 byte dmg_color_palette[] = {0xFF, 0xAA, 0x55, 0x00};
@@ -367,7 +369,7 @@ __always_inline static void draw_window_line_dmg(uint8_t line)
     int16_t real_window_origin_x = wx - 7;
     int16_t real_window_origin_y = wy;
 
-    if (line < real_window_origin_y)
+    if (line < real_window_origin_y || wx > 166)
         return;
 
     // addressing method
@@ -383,6 +385,8 @@ __always_inline static void draw_window_line_dmg(uint8_t line)
         // which pixel in the window map
         byte window_map_pixel_index_x = x - real_window_origin_x; // seems fine
         byte window_map_pixel_index_y = line - real_window_origin_y; // seems fine
+
+        window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, dmg-acid2
 
         // which pixel in the tile
         byte window_tile_pixel_index_x = window_map_pixel_index_x % 8;
@@ -443,6 +447,8 @@ __always_inline static void draw_window_line_dmg(uint8_t line)
         next_ppu_viewport[pixel_index] = (0xFF << 24) + (color << 16) + (color << 8) + color;
         bg_color_indices[pixel_index] = color_palette_index;
     }
+
+    window_interal_line_counter++;
 }
 
 __always_inline static void draw_sprites_line_dmg(uint8_t line)
@@ -625,7 +631,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
     int16_t real_window_origin_x = wx - 7;
     int16_t real_window_origin_y = wy;
 
-    if (line < real_window_origin_y)
+    if (line < real_window_origin_y || wx > 166)
         return;
 
     // addressing method
@@ -641,6 +647,8 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         // which pixel in the window map
         byte window_map_pixel_index_x = x - real_window_origin_x; // seems fine
         byte window_map_pixel_index_y = line - real_window_origin_y; // seems fine
+
+        window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, cgb-acid2
 
         // which pixel in the tile
         byte window_tile_pixel_index_x = window_map_pixel_index_x % 8;
@@ -711,6 +719,8 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
         bg_color_indices[pixel_index] = (ppu_regs.lcdc->bg_window_enable_prio ? color_palette_index : 0);
     }
+
+    window_interal_line_counter++;
 }
 
 __always_inline static void draw_sprites_line_cgb(uint8_t line)
@@ -882,6 +892,8 @@ __always_inline static void vblank()
     if (!did_vblank)
     {
         did_vblank = 1;
+
+        window_interal_line_counter = 0;
 
         // do vblank stuff
 
