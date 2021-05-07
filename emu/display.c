@@ -868,7 +868,7 @@ __always_inline static void hblank()
 
         // do hblank stuff
         // todo: maybe this has to be mem.raw[LY] + 1 instead
-        ppu_regs.stat->lyc_eq_ly = (mem.raw[LYC] == mem.raw[LY]);
+        ppu_regs.stat->lyc_eq_ly = (mem.raw[LYC] == mem.raw[LY] + 1);
 
         if (ppu_regs.stat->lyc_eq_ly || ppu_regs.stat->hblank_int)
             mem.map.interrupt_flag_reg.LCD_STAT = 1;
