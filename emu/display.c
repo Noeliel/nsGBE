@@ -246,7 +246,9 @@ uint32_t *display_request_next_frame()
 {
     if (new_frame_available)
     {
+#ifndef EMSCRIPTEN
         pthread_mutex_lock(&mtx);
+#endif
 
         uint32_t *tmp = next_display_viewport;
         next_display_viewport = active_display_viewport;
@@ -254,7 +256,9 @@ uint32_t *display_request_next_frame()
 
         new_frame_available = 0;
 
+#ifndef EMSCRIPTEN
         pthread_mutex_unlock(&mtx);
+#endif
     }
 
     return active_display_viewport;
@@ -901,7 +905,9 @@ __always_inline static void vblank()
 
         // do vblank stuff
 
+#ifndef EMSCRIPTEN
         pthread_mutex_lock(&mtx);
+#endif
 
         uint32_t *tmp = next_ppu_viewport;
         next_ppu_viewport = next_display_viewport;
@@ -909,7 +915,9 @@ __always_inline static void vblank()
 
         new_frame_available = 1;
 
+#ifndef EMSCRIPTEN
         pthread_mutex_unlock(&mtx);
+#endif
 
         //printf("drawing frame\n");
         if (display_notify_vblank)
