@@ -47,8 +47,14 @@ __always_inline byte mem_read(uint16_t offset)
         return (component_response & 0xFF);
 
     if (enable_bootrom)
+    {
         if (offset <= 0xFF)
             return *((byte *)biosbuffer + offset);
+
+        if (gb_mode == MODE_CGB)
+            if (offset >= 0x200 && offset <= 0x8FF)
+                return *((byte *)biosbuffer + offset);
+    }
 
     component_response = ppu_interpret_read(offset);
     if (component_response > 0xFF)
