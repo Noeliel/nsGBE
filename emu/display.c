@@ -27,7 +27,11 @@
 // -> this may fail some tests, but it should be good enough for most games
 
 #include <env.h>
+
+#ifndef EMSCRIPTEN
 #include <pthread.h>
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 #define WINDOW_VISIBLE  ((int8_t)mem.raw[WY] >= 0 && \
                          (int8_t)mem.raw[WX] >= 0 && \
@@ -69,7 +73,6 @@ uint32_t *active_display_viewport = view_port_1;
 uint32_t *next_display_viewport = view_port_2;
 uint32_t *next_ppu_viewport = view_port_3;
 
-pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 _Bool new_frame_available = 0;
 
 byte bg_color_indices[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT]; // which palette index a pixel had for transparency / blending
