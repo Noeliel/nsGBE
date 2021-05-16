@@ -374,7 +374,7 @@ __always_inline static void draw_window_line_dmg(uint8_t line)
     int16_t real_window_origin_x = wx - 7;
     int16_t real_window_origin_y = wy;
 
-    if (line < real_window_origin_y || wx > 166)
+    if (line < real_window_origin_y || real_window_origin_x < 0 || real_window_origin_x > 165 || real_window_origin_y > 143)
         return;
 
     // addressing method
@@ -391,7 +391,7 @@ __always_inline static void draw_window_line_dmg(uint8_t line)
         byte window_map_pixel_index_x = x - real_window_origin_x; // seems fine
         byte window_map_pixel_index_y = line - real_window_origin_y; // seems fine
 
-        window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, dmg-acid2
+        //window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, dmg-acid2
 
         // which pixel in the tile
         byte window_tile_pixel_index_x = window_map_pixel_index_x % 8;
@@ -643,7 +643,7 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
         if (ppu_regs.lcdc->bg_window_enable_prio)
         {
             if (bg_map_attributes->bg_to_oam_prio)
-                bg_color_indices[pixel_index] = 4;
+                bg_color_indices[pixel_index] = (color_palette_index == 0 ? 0 : 4);
             else
                 bg_color_indices[pixel_index] = color_palette_index;
         }
@@ -662,7 +662,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
     int16_t real_window_origin_x = wx - 7;
     int16_t real_window_origin_y = wy;
 
-    if (line < real_window_origin_y || wx > 166)
+    if (line < real_window_origin_y || real_window_origin_x < 0 || real_window_origin_x > 165 || real_window_origin_y > 143)
         return;
 
     // addressing method
@@ -679,7 +679,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         byte window_map_pixel_index_x = x - real_window_origin_x; // seems fine
         byte window_map_pixel_index_y = line - real_window_origin_y; // seems fine
 
-        window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, cgb-acid2
+        //window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, cgb-acid2
 
         // which pixel in the tile
         byte window_tile_pixel_index_x = window_map_pixel_index_x % 8;
@@ -752,7 +752,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         if (ppu_regs.lcdc->bg_window_enable_prio)
         {
             if (bg_map_attributes->bg_to_oam_prio)
-                bg_color_indices[pixel_index] = 4;
+                bg_color_indices[pixel_index] = (color_palette_index == 0 ? 0 : 4);
             else
                 bg_color_indices[pixel_index] = color_palette_index;
         }
