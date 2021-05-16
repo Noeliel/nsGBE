@@ -2,6 +2,23 @@ cmake_minimum_required(VERSION 3.10.2)
 
 project("nsgbe")
 
+find_package(Git)
+if(Git_FOUND)
+  execute_process(COMMAND
+    "${GIT_EXECUTABLE}" rev-parse --short HEAD
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE CMAKE_GIT_HASH
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  execute_process(COMMAND
+    "${GIT_EXECUTABLE}" rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE CMAKE_GIT_BRANCH
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  add_compile_definitions(GIT_HASH=\"${CMAKE_GIT_HASH}\" GIT_BRANCH=\"${CMAKE_GIT_BRANCH}\")
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
