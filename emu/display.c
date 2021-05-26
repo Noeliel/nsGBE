@@ -79,11 +79,6 @@ byte bg_color_indices[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT]; // which pa
 
 void (* display_notify_vblank)();
 
-_Bool did_oam_read = 0;
-_Bool did_vram_read = 0;
-_Bool did_hblank = 0;
-_Bool did_vblank = 0;
-
 uint8_t window_interal_line_counter = 0;
 
 /* DMG stuff */
@@ -895,131 +890,78 @@ __always_inline static void render_scanline()
 
 __always_inline static void oam_read()
 {
-    if (!did_oam_read)
-    {
-        did_oam_read = 1;
-
-        // do oam read stuff
-    }
-
-    ppu_clock_cycle_counter++;
+    // do oam read stuff
 }
 
 __always_inline static void vram_read()
 {
-    if (!did_vram_read)
-    {
-        did_vram_read = 1;
+    // do vram read stuff
 
-        // do vram read stuff
-
-        // render scanline
-        render_scanline();
-    }
-
-    ppu_clock_cycle_counter++;
+    // render scanline
+    render_scanline();
 }
 
 __always_inline static void hblank()
 {
-    if (!did_hblank)
-    {
-        did_hblank = 1;
+    // do hblank stuff
+    // todo: maybe this has to be mem.raw[LY] + 1 instead
+    ppu_regs.stat->lyc_eq_ly = (mem.raw[LYC] == mem.raw[LY] + 1);
 
-        // do hblank stuff
-        // todo: maybe this has to be mem.raw[LY] + 1 instead
-        ppu_regs.stat->lyc_eq_ly = (mem.raw[LYC] == mem.raw[LY] + 1);
-
-        if (ppu_regs.stat->lyc_eq_ly || ppu_regs.stat->hblank_int)
-            mem.map.interrupt_flag_reg.LCD_STAT = 1;
-    }
-
-    ppu_clock_cycle_counter++;
+    if (ppu_regs.stat->lyc_eq_ly || ppu_regs.stat->hblank_int)
+        mem.map.interrupt_flag_reg.LCD_STAT = 1;
 }
 
 __always_inline static void vblank()
 {
-    if (!did_vblank)
-    {
-        did_vblank = 1;
+    window_interal_line_counter = 0;
 
-        window_interal_line_counter = 0;
-
-        // do vblank stuff
+    // do vblank stuff
 
 #ifndef EMSCRIPTEN
-        pthread_mutex_lock(&mtx);
+    pthread_mutex_lock(&mtx);
 #endif
 
-        uint32_t *tmp = next_ppu_viewport;
-        next_ppu_viewport = next_display_viewport;
-        next_display_viewport = tmp;
+    uint32_t *tmp = next_ppu_viewport;
+    next_ppu_viewport = next_display_viewport;
+    next_display_viewport = tmp;
 
-        new_frame_available = 1;
+    new_frame_available = 1;
 
 #ifndef EMSCRIPTEN
-        pthread_mutex_unlock(&mtx);
+    pthread_mutex_unlock(&mtx);
 #endif
 
-        //printf("drawing frame\n");
-        if (display_notify_vblank)
-            display_notify_vblank();
+    //printf("drawing frame\n");
+    if (display_notify_vblank)
+        display_notify_vblank();
 
-        mem.map.interrupt_flag_reg.VBLANK = 1;
-    }
-
-    ppu_clock_cycle_counter++;
+    mem.map.interrupt_flag_reg.VBLANK = 1;
 }
 
 __always_inline void ppu_step()
 {
-    switch(ppu_regs.stat->mode)
-    {
-        case PPU_OAM_READ_MODE:
-            did_vram_read = 0;
-            did_hblank = 0;
-            did_vblank = 0;
-            oam_read();
-            break;
-
-        case PPU_VRAM_READ_MODE:
-            did_oam_read = 0;
-            did_hblank = 0;
-            did_vblank = 0;
-            vram_read();
-            break;
-
-        case PPU_HBLANK_MODE:
-            did_oam_read = 0;
-            did_vram_read = 0;
-            did_vblank = 0;
-            hblank();
-            break;
-
-        case PPU_VBLANK_MODE:
-            did_oam_read = 0;
-            did_vram_read = 0;
-            did_hblank = 0;
-            vblank();
-            break;
-
-        default:
-            break;
-    }
+    ppu_clock_cycle_counter++;
 
     if (mem.raw[LY] <= 143)
     {
         // todo: improve this so it doesn't cycle through all the modes all the time
-        if (ppu_clock_cycle_counter >= 80) // leave OAM_READ_MODE
-            ppu_regs.stat->mode = PPU_VRAM_READ_MODE;
-        if (ppu_clock_cycle_counter >= 252) // leave VRAM_READ_MODE; hardcoded duration 172, it's 168 to 291 depending on sprite count
-            ppu_regs.stat->mode = PPU_HBLANK_MODE;
-        if (ppu_clock_cycle_counter >= 456) // leave HBLANK_MODE; hardcoded duration 204, it's 85 to 208 depending on previous duration
+        if (ppu_clock_cycle_counter > 456) // leave HBLANK_MODE; hardcoded duration 204, it's 85 to 208 depending on previous duration
         {
-            ppu_clock_cycle_counter -= 456;
+            ppu_clock_cycle_counter = 0;
             mem.raw[LY]++;
             //DEBUG_PRINT(("drawing scanline 0x%02X\n", mem.raw[LY]));
             ppu_regs.stat->mode = PPU_OAM_READ_MODE;
+            oam_read();
+        }
+        else if (ppu_clock_cycle_counter == 253) // leave VRAM_READ_MODE; hardcoded duration 172, it's 168 to 291 depending on sprite count
+        {
+            ppu_regs.stat->mode = PPU_HBLANK_MODE;
+            hblank();
+        }
+        else if (ppu_clock_cycle_counter == 81) // leave OAM_READ_MODE
+        {
+            ppu_regs.stat->mode = PPU_VRAM_READ_MODE;
+            vram_read();
         }
     }
     else if (mem.raw[LY] >= 144)
@@ -1028,11 +970,13 @@ __always_inline void ppu_step()
 
         mem.raw[LY] = 144 + (ppu_clock_cycle_counter / 456);
 
-        if (ppu_clock_cycle_counter >= 4560)
+        if (ppu_clock_cycle_counter > 4560)
         {
-            ppu_clock_cycle_counter -= 4560;
+            vblank();
+            ppu_clock_cycle_counter = 0;
             mem.raw[LY] = 0;
             ppu_regs.stat->mode = PPU_OAM_READ_MODE;
+            oam_read();
         }
     }
 }
