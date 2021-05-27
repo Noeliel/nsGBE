@@ -1090,9 +1090,7 @@ __always_inline int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute)
     char input[2];
 #endif
 
-    clock_cycle_counter = 0;
-
-    while (clock_cycle_counter < clock_cycles_to_execute && cpu_alive == 1)
+    for (clock_cycle_counter = 0; clock_cycle_counter < clock_cycles_to_execute && cpu_alive == 1;)
     {
 
 #ifdef __DEBUG

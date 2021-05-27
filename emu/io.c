@@ -28,8 +28,6 @@
 #define IO_TIMER_MOD       0xFF06
 #define IO_TIMER_CONTROL   0xFF07
 
-int32_t io_exec_cycle_counter = 0;
-
 byte dma_byte;
 uint16_t oam_dma_timer = 0;
 
@@ -349,13 +347,8 @@ __always_inline void io_step()
 
 __always_inline int32_t io_exec_cycles(int32_t clock_cycles_to_execute)
 {
-    io_exec_cycle_counter = 0;
-
-    while (io_exec_cycle_counter < clock_cycles_to_execute)
-    {
+    for (int32_t io_exec_cycle_counter = 0; io_exec_cycle_counter < clock_cycles_to_execute; io_exec_cycle_counter++)
             io_step();
-            io_exec_cycle_counter++;
-    }
 
     return 0;
 }
