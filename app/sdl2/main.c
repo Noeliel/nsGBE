@@ -31,7 +31,7 @@ char *batterypath;
 
 extern int gui_main(int argc, char **argv);
 
-__always_inline void free_ptr(void **ptr)
+__always_inline static void free_ptr(void **ptr)
 {
     if (*ptr)
     {
