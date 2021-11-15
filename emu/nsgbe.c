@@ -94,7 +94,8 @@ static int rom_load()
 #endif
 #endif
     printf("------------------------------------\n");
-    // printf("Start vector: 0x%02x 0x%02x 0x%02x 0x%02x\n", rom_header->start_vector[0], rom_header->start_vector[1], rom_header->start_vector[2], rom_header->start_vector[3]);
+    // printf("Start vector: 0x%02x 0x%02x 0x%02x 0x%02x\n", rom_header->start_vector[0], rom_header->start_vector[1], rom_header->start_vector[2], \
+      rom_header->start_vector[3]);
     printf("Rom size: %lu byte\n", romsize);
     printf("Rom title: %.*s\n", 15, rom_header->game_title);
     printf("Destination code: 0x%02X\n", rom_header->destination_code);

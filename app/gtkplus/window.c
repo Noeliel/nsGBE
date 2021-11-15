@@ -98,7 +98,9 @@ static gboolean setup_draw_surface(GtkWidget *widget, GdkEventConfigure *event, 
     if (surface)
         cairo_surface_destroy(surface);
 
-    surface = gdk_window_create_similar_surface(gtk_widget_get_window(widget), CAIRO_CONTENT_COLOR, gtk_widget_get_allocated_width(widget), gtk_widget_get_allocated_height(widget));
+    surface = gdk_window_create_similar_surface(gtk_widget_get_window(widget), CAIRO_CONTENT_COLOR, gtk_widget_get_allocated_width(widget), \
+      gtk_widget_get_allocated_height(widget));
+
     clear_surface();
 
     return TRUE;

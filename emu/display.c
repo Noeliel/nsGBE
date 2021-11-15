@@ -133,7 +133,9 @@ struct DMG_SPRITE_ATTRIBUTE {
 #define FCGB_BLUE(low, high) ((byte)(RGB_BLUE(low, high) * 0.75f + 0x8) & 0xFF)
 
 // accurate RGB -> CGB
-// values taken from https://github.com/libretro/glsl-shaders/blob/77697c58448380156a87b251e6461d5ab00071f3/handheld/shaders/color/gbc-color.glsl (source is public domain)
+// values taken from
+// https://github.com/libretro/glsl-shaders/blob/77697c58448380156a87b251e6461d5ab00071f3/handheld/shaders/color/gbc-color.glsl
+// (source is public domain)
 #define ACGB_r  0.82f
 #define ACGB_gr 0.24f
 #define ACGB_br -0.06f
@@ -633,7 +635,8 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
         //printf("color_index: %d\n", color_index);
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) \
+          + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
 
         if (ppu_regs.lcdc->bg_window_enable_prio)
         {
@@ -742,7 +745,8 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         //printf("color_index: %d\n", color_index);
 
         uint16_t pixel_index = x + (line % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
-        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
+        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_bg_color_palettes_b[color_index] << 16) \
+          + (adjusted_bg_color_palettes_g[color_index] << 8) + adjusted_bg_color_palettes_r[color_index];
 
         if (ppu_regs.lcdc->bg_window_enable_prio)
         {
@@ -842,8 +846,10 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
                     uint16_t pixel_index = real_sprite_origin_x + sprite_pixel_index_x + (mem.raw[LY] % GB_FRAMEBUFFER_HEIGHT) * GB_FRAMEBUFFER_WIDTH;
 
                     // this is not correct -- see pandocs note on sprite priorities and conflicts
-                    if (color_palette_index != 0 && (bg_color_indices[pixel_index] == 5 || (bg_color_indices[pixel_index] != 4 && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))))
-                        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_obj_color_palettes_b[color_index] << 16) + (adjusted_obj_color_palettes_g[color_index] << 8) + adjusted_obj_color_palettes_r[color_index];
+                    if (color_palette_index != 0 && (bg_color_indices[pixel_index] == 5 || (bg_color_indices[pixel_index] != 4 \
+                      && (!spr_attrs->flags.bg_win_on_top || bg_color_indices[pixel_index] == 0))))
+                        next_ppu_viewport[pixel_index] = (0xFF << 24) + (adjusted_obj_color_palettes_b[color_index] << 16) \
+                          + (adjusted_obj_color_palettes_g[color_index] << 8) + adjusted_obj_color_palettes_r[color_index];
                 }
             }
         }

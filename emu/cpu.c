@@ -196,7 +196,8 @@ __always_inline static void instr_ADD_r_s(struct CPU_INSTRUCTION *instr) // Add 
 
     cpu_regs.F.Z = (result == 0);
     cpu_regs.F.N = 0;
-    //printf("[DEBUG] instr_ADD_r_s: 0x%04X + 0x%04X = 0x%04X | Z: %d N: %d H: %d C: %d\n", (* (byte *)instr->operands[0]), (* (byte *)instr->operands[1]), result, cpu_regs.F.Z, cpu_regs.F.N, cpu_regs.F.H, cpu_regs.F.C);
+    //printf("[DEBUG] instr_ADD_r_s: 0x%04X + 0x%04X = 0x%04X | Z: %d N: %d H: %d C: %d\n", (* (byte *)instr->operands[0]), (* (byte *)instr->operands[1]), \
+      result, cpu_regs.F.Z, cpu_regs.F.N, cpu_regs.F.H, cpu_regs.F.C);
 }
 
 __always_inline static void instr_ADC_r_s(struct CPU_INSTRUCTION *instr) // Add register data8 + carry flag
@@ -1098,7 +1099,9 @@ __always_inline int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute)
             //single_steps = 1;
 
         if (activate_single_stepping_on_condition)
-            printf("A: 0x%02X B: 0x%02X C: 0x%02X D: 0x%02X E: 0x%02X F: 0x%02X H: 0x%02X L: 0x%02X PC: 0x%04X SP: 0x%04X Z: %d N: %d H: %d C: %d\n", cpu_regs.A, cpu_regs.B, cpu_regs.C, cpu_regs.D, cpu_regs.E, cpu_regs.F, cpu_regs.H, cpu_regs.L, cpu_regs.PC, cpu_regs.SP, cpu_regs.F.Z, cpu_regs.F.N, cpu_regs.F.H, cpu_regs.F.C);
+            printf("A: 0x%02X B: 0x%02X C: 0x%02X D: 0x%02X E: 0x%02X F: 0x%02X H: 0x%02X L: 0x%02X PC: 0x%04X SP: 0x%04X Z: %d N: %d H: %d C: %d\n", \
+              cpu_regs.A, cpu_regs.B, cpu_regs.C, cpu_regs.D, cpu_regs.E, cpu_regs.F, cpu_regs.H, cpu_regs.L, cpu_regs.PC, cpu_regs.SP, cpu_regs.F.Z, \
+              cpu_regs.F.N, cpu_regs.F.H, cpu_regs.F.C);
 
         if (till_zero && cpu_regs.F.Z == 1)
             single_steps = 1;

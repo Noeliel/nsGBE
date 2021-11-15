@@ -69,8 +69,11 @@ extern void free_ptr(void **ptr);
 
 /*--------------------MISC--------------------*/
 
-#define PREFER_CGB_MODE 1 // 0 = prefer DMG (grayscale) mode for type 0x80 cartridges; 1 = use CGB mode instead (default)
-#define EMULATED_CGB_DISPLAY_TONE 2 // 0 = unmodified RGB colors; 1 = fast (inaccurate) display tone emulation; 2 = slower (accurate) display tone emulation (default)
+// 0 = prefer DMG (grayscale) mode for type 0x80 cartridges; 1 = use CGB mode instead (default)
+#define PREFER_CGB_MODE 1
+
+// 0 = unmodified RGB colors; 1 = fast (inaccurate) display tone emulation; 2 = slower (accurate) display tone emulation (default)
+#define EMULATED_CGB_DISPLAY_TONE 2
 
 typedef enum GB_MODE {
     MODE_DMG,
