@@ -913,7 +913,7 @@ __always_inline static void hblank()
     // todo: maybe this has to be mem.raw[LY] + 1 instead
     ppu_regs.stat->lyc_eq_ly = (mem.raw[LYC] == mem.raw[LY] + 1);
 
-    if (ppu_regs.stat->lyc_eq_ly || ppu_regs.stat->hblank_int)
+    if ((ppu_regs.stat->lyc_eq_ly || ppu_regs.stat->hblank_int) && mem.map.interrupt_enable_reg.LCD_STAT)
         mem.map.interrupt_flag_reg.LCD_STAT = 1;
 }
 
@@ -941,7 +941,8 @@ __always_inline static void vblank()
     if (display_notify_vblank)
         display_notify_vblank();
 
-    mem.map.interrupt_flag_reg.VBLANK = 1;
+    if (mem.map.interrupt_enable_reg.VBLANK)
+        mem.map.interrupt_flag_reg.VBLANK = 1;
 }
 
 __always_inline void ppu_step()
