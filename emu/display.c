@@ -941,8 +941,7 @@ __always_inline static void vblank()
     if (display_notify_vblank)
         display_notify_vblank();
 
-    if (mem.map.interrupt_enable_reg.VBLANK)
-        mem.map.interrupt_flag_reg.VBLANK = 1;
+    mem.map.interrupt_flag_reg.VBLANK = 1;
 }
 
 __always_inline void ppu_step()
