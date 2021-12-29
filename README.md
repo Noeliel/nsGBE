@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 Noeliel <noelieldev@gmail.com>
+
+SPDX-License-Identifier: LGPL-2.0-only
+-->
+
 # nsGBE
 **N**o **S**pecial **G**ame **B**oy **E**mulator is a work-in-progress interpreting Game Boy (Color) emulator written in C.  
 Its feature set is limited but it is able to run a good amount of original Game Boy (DMG) and some Game Boy Color (CGB, experimental) games that use no MBC or MBC3/5.  

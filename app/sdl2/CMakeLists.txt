@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021 Noeliel <noelieldev@gmail.com>
+#
+# SPDX-License-Identifier: LGPL-2.0-only
+
 cmake_minimum_required(VERSION 3.10.2)
 
 project("nsgbe")
