@@ -182,7 +182,7 @@ extern void cpu_reset();
 extern uint32_t cpu_step();
 extern int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute);
 extern void cpu_break();
-extern struct CPU_INSTRUCTION *cpu_next_instruction();
+extern void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *inst_value);
 extern void handle_interrupts();
 
 extern void fake_dmg_bootrom();

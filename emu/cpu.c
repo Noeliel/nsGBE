@@ -18,7 +18,6 @@ struct CPU_INSTRUCTION {
 };
 
 struct CPU_REGS cpu_regs;
-struct CPU_INSTRUCTION p_instr;
 
 _Bool cpu_alive = 0;
 _Bool cpu_int_halt = 0;
@@ -1030,16 +1029,19 @@ void cpu_run()
 
 __always_inline uint32_t cpu_step() // advance one op
 {
-    struct CPU_INSTRUCTION *instr = cpu_next_instruction(); // fetch next instruction
+    struct CPU_INSTRUCTION instr;
+    word inst_value = word(0x1000);
+
+    cpu_next_instruction(&instr, &inst_value); // fetch next instruction
 
     if (!cpu_int_halt && !cpu_dma_halt)
     {
-        DEBUG_PRINT(("@($%04X): 0x%02X ", cpu_regs.PC, instr->opcode));
-        if (instr->operands_length > 0)
+        DEBUG_PRINT(("@($%04X): 0x%02X ", cpu_regs.PC, instr.opcode));
+        if (instr.operands_length > 0)
             DEBUG_PRINT(("0x%02X ", mem_read(cpu_regs.PC + 1)));
         else
             DEBUG_PRINT(("     "));
-        if (instr->operands_length > 1)
+        if (instr.operands_length > 1)
             DEBUG_PRINT(("0x%02X ", mem_read(cpu_regs.PC + 2)));
         else
             DEBUG_PRINT(("     "));
@@ -1047,15 +1049,15 @@ __always_inline uint32_t cpu_step() // advance one op
         DEBUG_PRINT((instr->description));
         DEBUG_PRINT(("\n"));
 
-        (* instr->handler)(instr); // execute next instruction
-        (* instr->progresser)(instr);
+        (* instr.handler)(&instr); // execute next instruction
+        (* instr.progresser)(&instr);
 
         // hacky fix for POP AF
         // blargg instr test 1 tries to set these 4 bits to something
         // ...using POP AF, but they should always be 0
         cpu_regs.F.unused = 0;
 
-        global_cycle_counter += instr->clock_cycles;
+        global_cycle_counter += instr.clock_cycles;
     }
 
     if (interrupt_master_enable > 1) // may need to do this after the interrupt handler, not before it (but probably not)
@@ -1063,7 +1065,7 @@ __always_inline uint32_t cpu_step() // advance one op
 
     handle_interrupts();
 
-    clock_cycle_counter += instr->clock_cycles;
+    clock_cycle_counter += instr.clock_cycles;
 
     // recycle memory, so the next line is commented out
     //free(instr);
@@ -1189,19 +1191,20 @@ __always_inline void handle_interrupts()
     }
 }
 
-word inst_value = word(0x0000);
-__always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
+//word inst_value = word(0x0000);
+__always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *inst_value)
 {
     // recycle memory, so the next line is commented out
     //struct CPU_INSTRUCTION *instr = calloc(sizeof(struct CPU_INSTRUCTION), 1);
 
-    struct CPU_INSTRUCTION *instr = &p_instr;
+    //struct CPU_INSTRUCTION s_instr;
+    //struct CPU_INSTRUCTION *instr = &s_instr;
 
     instr->handler = &instr_nop;
     instr->progresser = &prog_default;
     instr->operands_length = 0;
 
-    inst_value.w = 0;
+    inst_value->w = 0;
 
     if (mem_read(cpu_regs.PC) != 0xCB)
     { // primary instruction table
@@ -1220,8 +1223,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 instr->operands[0] = (word *)&cpu_regs.BC;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD BC,d16";
                 break;
 
@@ -1259,8 +1262,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD B,d8";
                 break;
 
@@ -1274,8 +1277,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_dd_ss;
                 instr->clock_cycles = 20;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->operands[1] = (word *)&cpu_regs.SP;
                 instr->description = "LD (a16),SP";
                 break;
@@ -1292,8 +1295,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.BC);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.BC);
+                instr->operands[1] = inst_value;
                 instr->description = "LD A,(BC)";
                 break;
 
@@ -1323,8 +1326,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD C,d8";
                 break;
 
@@ -1345,8 +1348,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 instr->operands[0] = (word *)&cpu_regs.DE;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD DE,d16";
                 break;
 
@@ -1384,8 +1387,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD D,d8";
                 break;
 
@@ -1400,8 +1403,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 12;
                 instr->operands_length = 1;
-                inst_value.w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                instr->operands[0] = inst_value.w;
+                inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
+                instr->operands[0] = inst_value->w;
                 instr->description = "JR r8";
                 break;
 
@@ -1417,8 +1420,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.DE);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.DE);
+                instr->operands[1] = inst_value;
                 instr->description = "LD A,(DE)";
                 break;
 
@@ -1448,8 +1451,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD E,d8";
                 break;
 
@@ -1465,8 +1468,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                     instr->handler = &instr_nop;
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (zero)
-                    inst_value.w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value.w;
+                    inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
+                    instr->operands[0] = inst_value->w;
                 }
                 else
                 {
@@ -1482,8 +1485,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD HL,d16";
                 break;
 
@@ -1519,8 +1522,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD H,d8";
                 break;
 
@@ -1536,8 +1539,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                     instr->handler = &instr_nop;
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (not zero)
-                    inst_value.w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value.w;
+                    inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
+                    instr->operands[0] = inst_value->w;
                 }
                 else
                 {
@@ -1588,8 +1591,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD L,d8";
                 break;
 
@@ -1605,8 +1608,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                     instr->handler = &instr_nop;
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (carry)
-                    inst_value.w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value.w;
+                    inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
+                    instr->operands[0] = inst_value->w;
                 }
                 else
                 {
@@ -1622,8 +1625,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 instr->operands[0] = (word *)&cpu_regs.SP;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD SP,d16";
                 break;
 
@@ -1659,8 +1662,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 12;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = (word *)&inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = (word *)inst_value;
                 instr->description = "LD (HL),d8";
                 break;
 
@@ -1676,8 +1679,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                     instr->handler = &instr_nop;
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (not carry)
-                    inst_value.w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value.w;
+                    inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
+                    instr->operands[0] = inst_value->w;
                 }
                 else
                 {
@@ -1728,8 +1731,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "LD A,d8";
                 break;
 
@@ -1789,8 +1792,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "LD B,(HL)";
                 break;
 
@@ -1852,8 +1855,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "LD C,(HL)";
                 break;
 
@@ -1915,8 +1918,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "LD D,(HL)";
                 break;
 
@@ -1978,8 +1981,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "LD E,(HL)";
                 break;
 
@@ -2041,8 +2044,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "LD H,(HL)";
                 break;
 
@@ -2104,8 +2107,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "LD L,(HL)";
                 break;
 
@@ -2231,8 +2234,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "LD A,(HL)";
                 break;
 
@@ -2294,8 +2297,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_ADD_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "ADD A,(HL)";
                 break;
 
@@ -2359,8 +2362,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_ADC_r_s;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "ADC A,(HL)";
                 break;
 
@@ -2480,8 +2483,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SBC_r_s;
                 instr->clock_cycles = 4;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[1] = inst_value;
                 instr->description = "SBC A,(HL)";
                 break;
 
@@ -2538,8 +2541,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
             case 0xA6:
                 instr->handler = &instr_AND_s;
                 instr->clock_cycles = 8;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[0] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[0] = inst_value;
                 instr->description = "AND (HL)";
                 break;
 
@@ -2595,8 +2598,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
             case 0xAE:
                 instr->handler = &instr_XOR_s;
                 instr->clock_cycles = 8;
-                inst_value.w = mem_read(cpu_regs.HL);
-                instr->operands[0] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.HL);
+                instr->operands[0] = inst_value;
                 instr->description = "XOR (HL)";
                 break;
 
@@ -2654,8 +2657,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
             case 0xB6:
                 instr->handler = &instr_OR_s;
                 instr->clock_cycles = 8;
-                inst_value.w = mem_read(cpu_regs.HL);
-                instr->operands[0] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.HL);
+                instr->operands[0] = inst_value;
                 instr->description = "OR (HL)";
                 break;
 
@@ -2711,8 +2714,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
             case 0xBE:
                 instr->handler = &instr_CP_s;
                 instr->clock_cycles = 8;
-                inst_value.b.l = mem_read(cpu_regs.HL);
-                instr->operands[0] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.HL);
+                instr->operands[0] = inst_value;
                 instr->description = "CP (HL)";
                 break;
 
@@ -2740,8 +2743,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_JP_NZ;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "JP NZ,a16";
                 break;
 
@@ -2750,8 +2753,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "JP a16";
                 break;
 
@@ -2759,8 +2762,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_CALL_NZ;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "CALL NZ,a16";
                 break;
 
@@ -2776,8 +2779,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "ADD A,d8";
                 break;
 
@@ -2799,8 +2802,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_nop;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                inst_value = pop16();
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = pop16();
+                instr->operands[0] = inst_value->w;
                 instr->description = "RET";
                 break;
 
@@ -2808,8 +2811,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_JP_Z;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "JP Z,a16";
                 break;
 
@@ -2817,8 +2820,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_CALL_Z;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "CALL Z,a16";
                 break;
 
@@ -2827,8 +2830,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 24;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "CALL a16";
                 break;
 
@@ -2837,8 +2840,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "ADC A,d8";
                 break;
 
@@ -2867,8 +2870,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_JP_NC;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "JP NC,a16";
                 break;
 
@@ -2876,8 +2879,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_CALL_NC;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "CALL NC,a16";
                 break;
 
@@ -2892,8 +2895,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SUB_r;
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
-                inst_value.w = mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->description = "SUB d8";
                 break;
 
@@ -2915,8 +2918,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_RETI;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                inst_value = pop16();
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = pop16();
+                instr->operands[0] = inst_value->w;
                 instr->description = "RETI";
                 break;
 
@@ -2924,8 +2927,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_JP_C;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "JP C,a16";
                 break;
 
@@ -2933,8 +2936,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_CALL_C;
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value.w;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value->w;
                 instr->description = "CALL C,a16";
                 break;
 
@@ -2943,8 +2946,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[1] = inst_value;
                 instr->description = "SBC A,d8";
                 break;
 
@@ -2960,9 +2963,9 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_dd_s;
                 instr->clock_cycles = 12;
                 instr->operands_length = 1;
-                inst_value.w = 0xFF00;
-                inst_value.w += mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->w = 0xFF00;
+                inst_value->w += mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->operands[1] = (word *)&cpu_regs.A;
                 instr->description = "LDH (a8),A";
                 break;
@@ -2979,8 +2982,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->clock_cycles = 8;
                 //instr->operands_length = 1;
                 // todo: find out if ^this needs to be one
-                inst_value = word(0xFF00 + cpu_regs.C);
-                instr->operands[0] = &inst_value;
+                (* inst_value) = word(0xFF00 + cpu_regs.C);
+                instr->operands[0] = inst_value;
                 instr->operands[1] = (word *)&cpu_regs.A;
                 instr->description = "LD (C),A";
                 break;
@@ -2996,8 +2999,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_AND_s;
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->description = "AND d8";
                 break;
 
@@ -3013,8 +3016,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_ADD_SP_s;
                 instr->clock_cycles = 16;
                 instr->operands_length = 1;
-                inst_value.w = mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->description = "ADD SP,r8";
                 break;
 
@@ -3030,8 +3033,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_dd_s;
                 instr->clock_cycles = 16;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->operands[1] = (word *)&cpu_regs.A;
                 instr->description = "LD (a16),A";
                 break;
@@ -3040,8 +3043,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_XOR_s;
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
-                inst_value.w = mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->description = "XOR d8";
                 break;
 
@@ -3057,11 +3060,11 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 12;
                 instr->operands_length = 1;
-                inst_value.w = 0xFF00;
-                inst_value.w += mem_read(cpu_regs.PC + 1);
-                inst_value.w = mem_read(inst_value.w);
+                inst_value->w = 0xFF00;
+                inst_value->w += mem_read(cpu_regs.PC + 1);
+                inst_value->w = mem_read(inst_value->w);
                 instr->operands[0] = (word *)&cpu_regs.A;
-                instr->operands[1] = &inst_value;
+                instr->operands[1] = inst_value;
                 instr->description = "LDH A,(a8)";
                 break;
 
@@ -3078,8 +3081,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 //instr->operands_length = 1;
                 // todo: find out if ^this needs to be one
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = mem_read(0xFF00 + cpu_regs.C);
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = mem_read(0xFF00 + cpu_regs.C);
+                instr->operands[1] = inst_value;
                 instr->description = "LD (C),A";
                 break;
 
@@ -3100,8 +3103,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_OR_s;
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
-                inst_value.w = mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->description = "OR d8";
                 break;
 
@@ -3117,8 +3120,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &uinstr_LDHL_SP_s;
                 instr->clock_cycles = 12;
                 instr->operands_length = 1;
-                inst_value.w = mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->w = mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->description = "LD HL,SP+r8";
                 break;
 
@@ -3134,10 +3137,10 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_LD_r_s;
                 instr->clock_cycles = 16;
                 instr->operands_length = 2;
-                inst_value = mem_read_16(cpu_regs.PC + 1);
-                inst_value.w = mem_read(inst_value.w);
+                (* inst_value) = mem_read_16(cpu_regs.PC + 1);
+                inst_value->w = mem_read(inst_value->w);
                 instr->operands[0] = (word *)&cpu_regs.A;
-                instr->operands[1] = &inst_value;
+                instr->operands[1] = inst_value;
                 instr->description = "LD A,(a16)";
                 break;
 
@@ -3151,8 +3154,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_CP_s;
                 instr->clock_cycles = 8;
                 instr->operands_length = 1;
-                inst_value.b.l = mem_read(cpu_regs.PC + 1);
-                instr->operands[0] = &inst_value;
+                inst_value->b.l = mem_read(cpu_regs.PC + 1);
+                instr->operands[0] = inst_value;
                 instr->description = "CP d8";
                 break;
 
@@ -3635,8 +3638,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,B";
                 break;
 
@@ -3644,8 +3647,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,C";
                 break;
 
@@ -3653,8 +3656,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,D";
                 break;
 
@@ -3662,8 +3665,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,E";
                 break;
 
@@ -3671,8 +3674,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,H";
                 break;
 
@@ -3680,8 +3683,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,L";
                 break;
 
@@ -3689,8 +3692,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,(HL)";
                 break;
 
@@ -3698,8 +3701,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 0,A";
                 break;
 
@@ -3707,8 +3710,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,B";
                 break;
 
@@ -3716,8 +3719,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,C";
                 break;
 
@@ -3725,8 +3728,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,D";
                 break;
 
@@ -3734,8 +3737,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,E";
                 break;
 
@@ -3743,8 +3746,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,H";
                 break;
 
@@ -3752,8 +3755,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,L";
                 break;
 
@@ -3761,8 +3764,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,(HL)";
                 break;
 
@@ -3770,8 +3773,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 1,A";
                 break;
 
@@ -3779,8 +3782,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,B";
                 break;
 
@@ -3788,8 +3791,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,C";
                 break;
 
@@ -3797,8 +3800,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,D";
                 break;
 
@@ -3806,8 +3809,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,E";
                 break;
 
@@ -3815,8 +3818,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,H";
                 break;
 
@@ -3824,8 +3827,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,L";
                 break;
 
@@ -3833,8 +3836,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,(HL)";
                 break;
 
@@ -3842,8 +3845,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 2,A";
                 break;
 
@@ -3851,8 +3854,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,B";
                 break;
 
@@ -3860,8 +3863,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,C";
                 break;
 
@@ -3869,8 +3872,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,D";
                 break;
 
@@ -3878,8 +3881,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,E";
                 break;
 
@@ -3887,8 +3890,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,H";
                 break;
 
@@ -3896,8 +3899,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,L";
                 break;
 
@@ -3905,8 +3908,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,(HL)";
                 break;
 
@@ -3914,8 +3917,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 3,A";
                 break;
 
@@ -3923,8 +3926,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,B";
                 break;
 
@@ -3932,8 +3935,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,C";
                 break;
 
@@ -3941,8 +3944,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,D";
                 break;
 
@@ -3950,8 +3953,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,E";
                 break;
 
@@ -3959,8 +3962,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,H";
                 break;
 
@@ -3968,8 +3971,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,L";
                 break;
 
@@ -3977,8 +3980,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,(HL)";
                 break;
 
@@ -3986,8 +3989,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 4,A";
                 break;
 
@@ -3995,8 +3998,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,B";
                 break;
 
@@ -4004,8 +4007,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,C";
                 break;
 
@@ -4013,8 +4016,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,D";
                 break;
 
@@ -4022,8 +4025,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,E";
                 break;
 
@@ -4031,8 +4034,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,H";
                 break;
 
@@ -4040,8 +4043,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,L";
                 break;
 
@@ -4049,8 +4052,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,(HL)";
                 break;
 
@@ -4058,8 +4061,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 5,A";
                 break;
 
@@ -4067,8 +4070,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,B";
                 break;
 
@@ -4076,8 +4079,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,C";
                 break;
 
@@ -4085,8 +4088,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,D";
                 break;
 
@@ -4094,8 +4097,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,E";
                 break;
 
@@ -4103,8 +4106,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,H";
                 break;
 
@@ -4112,8 +4115,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,L";
                 break;
 
@@ -4121,8 +4124,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,(HL)";
                 break;
 
@@ -4130,8 +4133,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 6,A";
                 break;
 
@@ -4139,8 +4142,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,B";
                 break;
 
@@ -4148,8 +4151,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,C";
                 break;
 
@@ -4157,8 +4160,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,D";
                 break;
 
@@ -4166,8 +4169,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,E";
                 break;
 
@@ -4175,8 +4178,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,H";
                 break;
 
@@ -4184,8 +4187,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,L";
                 break;
 
@@ -4193,8 +4196,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,(HL)";
                 break;
 
@@ -4202,8 +4205,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_BIT_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "BIT 7,A";
                 break;
 
@@ -4211,8 +4214,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,B";
                 break;
 
@@ -4220,8 +4223,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,C";
                 break;
 
@@ -4229,8 +4232,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,D";
                 break;
 
@@ -4238,8 +4241,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,E";
                 break;
 
@@ -4247,8 +4250,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,H";
                 break;
 
@@ -4256,8 +4259,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,L";
                 break;
 
@@ -4265,8 +4268,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,(HL)";
                 break;
 
@@ -4274,8 +4277,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 0,A";
                 break;
 
@@ -4283,8 +4286,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,B";
                 break;
 
@@ -4292,8 +4295,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,C";
                 break;
 
@@ -4301,8 +4304,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,D";
                 break;
 
@@ -4310,8 +4313,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,E";
                 break;
 
@@ -4319,8 +4322,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,H";
                 break;
 
@@ -4328,8 +4331,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,L";
                 break;
 
@@ -4337,8 +4340,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,(HL)";
                 break;
 
@@ -4346,8 +4349,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 1,A";
                 break;
 
@@ -4355,8 +4358,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,B";
                 break;
 
@@ -4364,8 +4367,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,C";
                 break;
 
@@ -4373,8 +4376,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,D";
                 break;
 
@@ -4382,8 +4385,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,E";
                 break;
 
@@ -4391,8 +4394,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,H";
                 break;
 
@@ -4400,8 +4403,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,L";
                 break;
 
@@ -4409,8 +4412,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,(HL)";
                 break;
 
@@ -4418,8 +4421,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 2,A";
                 break;
 
@@ -4427,8 +4430,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,B";
                 break;
 
@@ -4436,8 +4439,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,C";
                 break;
 
@@ -4445,8 +4448,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,D";
                 break;
 
@@ -4454,8 +4457,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,E";
                 break;
 
@@ -4463,8 +4466,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,H";
                 break;
 
@@ -4472,8 +4475,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,L";
                 break;
 
@@ -4481,8 +4484,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,(HL)";
                 break;
 
@@ -4490,8 +4493,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 3,A";
                 break;
 
@@ -4499,8 +4502,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,B";
                 break;
 
@@ -4508,8 +4511,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,C";
                 break;
 
@@ -4517,8 +4520,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,D";
                 break;
 
@@ -4526,8 +4529,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,E";
                 break;
 
@@ -4535,8 +4538,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,H";
                 break;
 
@@ -4544,8 +4547,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,L";
                 break;
 
@@ -4553,8 +4556,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,(HL)";
                 break;
 
@@ -4562,8 +4565,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 4,A";
                 break;
 
@@ -4571,8 +4574,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,B";
                 break;
 
@@ -4580,8 +4583,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,C";
                 break;
 
@@ -4589,8 +4592,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,D";
                 break;
 
@@ -4598,8 +4601,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,E";
                 break;
 
@@ -4607,8 +4610,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,H";
                 break;
 
@@ -4616,8 +4619,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,L";
                 break;
 
@@ -4625,8 +4628,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,(HL)";
                 break;
 
@@ -4634,8 +4637,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 5,A";
                 break;
 
@@ -4643,8 +4646,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,B";
                 break;
 
@@ -4652,8 +4655,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,C";
                 break;
 
@@ -4661,8 +4664,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,D";
                 break;
 
@@ -4670,8 +4673,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,E";
                 break;
 
@@ -4679,8 +4682,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,H";
                 break;
 
@@ -4688,8 +4691,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,L";
                 break;
 
@@ -4697,8 +4700,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,(HL)";
                 break;
 
@@ -4706,8 +4709,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 6,A";
                 break;
 
@@ -4715,8 +4718,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,B";
                 break;
 
@@ -4724,8 +4727,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,C";
                 break;
 
@@ -4733,8 +4736,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,D";
                 break;
 
@@ -4742,8 +4745,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,E";
                 break;
 
@@ -4751,8 +4754,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,H";
                 break;
 
@@ -4760,8 +4763,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,L";
                 break;
 
@@ -4769,8 +4772,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,(HL)";
                 break;
 
@@ -4778,8 +4781,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_RES_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.b.l = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->b.l = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "RES 7,A";
                 break;
 
@@ -4787,8 +4790,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,B";
                 break;
 
@@ -4796,8 +4799,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,C";
                 break;
 
@@ -4805,8 +4808,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,D";
                 break;
 
@@ -4814,8 +4817,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,E";
                 break;
 
@@ -4823,8 +4826,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,H";
                 break;
 
@@ -4832,8 +4835,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,L";
                 break;
 
@@ -4841,8 +4844,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,(HL)";
                 break;
 
@@ -4850,8 +4853,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00000001;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000001;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 0,A";
                 break;
 
@@ -4859,8 +4862,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,B";
                 break;
 
@@ -4868,8 +4871,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,C";
                 break;
 
@@ -4877,8 +4880,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,D";
                 break;
 
@@ -4886,8 +4889,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,E";
                 break;
 
@@ -4895,8 +4898,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,H";
                 break;
 
@@ -4904,8 +4907,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,L";
                 break;
 
@@ -4913,8 +4916,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,(HL)";
                 break;
 
@@ -4922,8 +4925,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00000010;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000010;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 1,A";
                 break;
 
@@ -4931,8 +4934,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,B";
                 break;
 
@@ -4940,8 +4943,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,C";
                 break;
 
@@ -4949,8 +4952,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,D";
                 break;
 
@@ -4958,8 +4961,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,E";
                 break;
 
@@ -4967,8 +4970,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,H";
                 break;
 
@@ -4976,8 +4979,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,L";
                 break;
 
@@ -4985,8 +4988,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,(HL)";
                 break;
 
@@ -4994,8 +4997,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00000100;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00000100;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 2,A";
                 break;
 
@@ -5003,8 +5006,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,B";
                 break;
 
@@ -5012,8 +5015,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,C";
                 break;
 
@@ -5021,8 +5024,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,D";
                 break;
 
@@ -5030,8 +5033,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,E";
                 break;
 
@@ -5039,8 +5042,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,H";
                 break;
 
@@ -5048,8 +5051,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,L";
                 break;
 
@@ -5057,8 +5060,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,(HL)";
                 break;
 
@@ -5066,8 +5069,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00001000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00001000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 3,A";
                 break;
 
@@ -5075,8 +5078,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,B";
                 break;
 
@@ -5084,8 +5087,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,C";
                 break;
 
@@ -5093,8 +5096,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,D";
                 break;
 
@@ -5102,8 +5105,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,E";
                 break;
 
@@ -5111,8 +5114,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,H";
                 break;
 
@@ -5120,8 +5123,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,L";
                 break;
 
@@ -5129,8 +5132,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,(HL)";
                 break;
 
@@ -5138,8 +5141,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00010000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00010000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 4,A";
                 break;
 
@@ -5147,8 +5150,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,B";
                 break;
 
@@ -5156,8 +5159,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,C";
                 break;
 
@@ -5165,8 +5168,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,D";
                 break;
 
@@ -5174,8 +5177,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,E";
                 break;
 
@@ -5183,8 +5186,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,H";
                 break;
 
@@ -5192,8 +5195,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,L";
                 break;
 
@@ -5201,8 +5204,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,(HL)";
                 break;
 
@@ -5210,8 +5213,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b00100000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b00100000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 5,A";
                 break;
 
@@ -5219,8 +5222,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,B";
                 break;
 
@@ -5228,8 +5231,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,C";
                 break;
 
@@ -5237,8 +5240,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,D";
                 break;
 
@@ -5246,8 +5249,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,E";
                 break;
 
@@ -5255,8 +5258,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,H";
                 break;
 
@@ -5264,8 +5267,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,L";
                 break;
 
@@ -5273,8 +5276,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,(HL)";
                 break;
 
@@ -5282,8 +5285,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b01000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b01000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 6,A";
                 break;
 
@@ -5291,8 +5294,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.B;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,B";
                 break;
 
@@ -5300,8 +5303,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.C;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,C";
                 break;
 
@@ -5309,8 +5312,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.D;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,D";
                 break;
 
@@ -5318,8 +5321,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.E;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,E";
                 break;
 
@@ -5327,8 +5330,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.H;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,H";
                 break;
 
@@ -5336,8 +5339,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.L;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,L";
                 break;
 
@@ -5345,8 +5348,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_dd;
                 instr->clock_cycles = 16;
                 instr->operands[0] = (word *)&cpu_regs.HL;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,(HL)";
                 break;
 
@@ -5354,8 +5357,8 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 instr->handler = &instr_SET_r;
                 instr->clock_cycles = 8;
                 instr->operands[0] = (word *)&cpu_regs.A;
-                inst_value.w = 0b10000000;
-                instr->operands[1] = &inst_value;
+                inst_value->w = 0b10000000;
+                instr->operands[1] = inst_value;
                 instr->description = "SET 7,A";
                 break;
 
@@ -5367,6 +5370,4 @@ __always_inline struct CPU_INSTRUCTION *cpu_next_instruction()
                 break;
         }
     }
-
-    return instr;
 }
