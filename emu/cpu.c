@@ -1046,7 +1046,7 @@ __always_inline uint32_t cpu_step() // advance one op
         else
             DEBUG_PRINT(("     "));
         DEBUG_PRINT(("; "));
-        DEBUG_PRINT((instr->description));
+        DEBUG_PRINT((instr.description));
         DEBUG_PRINT(("\n"));
 
         (* instr.handler)(&instr); // execute next instruction
