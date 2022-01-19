@@ -156,19 +156,19 @@ byte adjusted_obj_color_palettes_b[0x20];
 union CGB_SPRITE_ATTRIBUTE_FLAGS {
     struct __attribute__((packed)) {
 #ifdef __LITTLE_ENDIAN__
-        byte palette_num       : 3;
-        _Bool vram_bank   : 1;
-        _Bool unused           : 1;
-        _Bool x_flip           : 1;
-        _Bool y_flip           : 1;
-        _Bool bg_win_on_top    : 1;
+        byte palette_num    : 3;
+        _Bool vram_bank     : 1;
+        _Bool unused        : 1;
+        _Bool x_flip        : 1;
+        _Bool y_flip        : 1;
+        _Bool bg_win_on_top : 1;
 #else
-        _Bool bg_win_on_top    : 1;
-        _Bool y_flip           : 1;
-        _Bool x_flip           : 1;
-        _Bool unused           : 1;
-        _Bool vram_bank   : 1;
-        byte palette_num       : 3;
+        _Bool bg_win_on_top : 1;
+        _Bool y_flip        : 1;
+        _Bool x_flip        : 1;
+        _Bool unused        : 1;
+        _Bool vram_bank     : 1;
+        byte palette_num    : 3;
 #endif
     };
     byte b;

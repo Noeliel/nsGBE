@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: LGPL-2.0-only
 
 #include <stdint.h>
+#include <stddef.h>
 
 //#define __DEBUG
 #ifdef __DEBUG
