@@ -221,7 +221,7 @@ __always_inline uint16_t generic_mbc_interpret_write(uint16_t offset, byte data)
 {
     if (offset >= 0x0000 && offset <= 0x1FFF)
     {
-        if (data & 0xFF == 0x0A) // RAM enable
+        if ((data & 0xFF) == 0x0A) // RAM enable
             // TODO: enable RAM
             return 0x100;
         else // RAM disable

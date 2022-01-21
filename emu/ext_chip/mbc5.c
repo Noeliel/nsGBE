@@ -12,7 +12,7 @@ uint16_t mbc5_interpret_write(uint16_t offset, byte data)
 {
     if (offset >= 0x0000 && offset <= 0x1FFF)
     {
-        if (data & 0xFF == 0x0A) // RAM enable
+        if ((data & 0x0F) == 0x0A) // RAM enable
             ext_ram_enabled = 1;
         else if (data == 0x00) // RAM disable
             ext_ram_enabled = 0;
@@ -60,8 +60,8 @@ uint16_t mbc5_interpret_write(uint16_t offset, byte data)
         return 0x100;
     }
 
-    //if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
-        //return 0xFF;
+    if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
+        return 0x100;
 
     return 0;
 }
@@ -73,6 +73,8 @@ uint16_t mbc5_interpret_read(uint16_t offset)
 
 uint32_t mbc5_setup()
 {
+    printf("[Info] Using MBC5.\n");
+
     for (uint16_t i = 1; i < ext_ram_bank_count; i++)
         free_ptr(&ext_ram_banks[i]);
 

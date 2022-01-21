@@ -99,8 +99,8 @@ uint16_t mbc3_interpret_write(uint16_t offset, byte data)
         return 0x100;
     }
 
-    //if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
-        //return 0x100;
+    if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
+        return 0x100;
 
     if (offset >= 0xA000 && offset <= 0xBFFF && rtc_reg_selected)
     {
@@ -153,6 +153,8 @@ uint16_t mbc3_interpret_read(uint16_t offset)
 
 uint32_t mbc3_setup()
 {
+    printf("[Info] Using MBC3.\n");
+
     for (uint16_t i = 1; i < ext_ram_bank_count; i++)
         free_ptr(&ext_ram_banks[i]);
 
