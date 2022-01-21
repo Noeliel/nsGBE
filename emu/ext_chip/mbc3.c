@@ -99,8 +99,8 @@ uint16_t mbc3_interpret_write(uint16_t offset, byte data)
         return 0x100;
     }
 
-    if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
-        return 0x100;
+    // if (offset >= 0xA000 && offset <= 0xBFFF && !ext_ram_enabled)
+        // return 0x100;
 
     if (offset >= 0xA000 && offset <= 0xBFFF && rtc_reg_selected)
     {
