@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: LGPL-2.0-only
 
+#include <string.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

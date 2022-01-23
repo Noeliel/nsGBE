@@ -59,7 +59,7 @@ extern void free_ptr(void **ptr);
 // 0 = unmodified RGB colors; 1 = fast (inaccurate) display tone emulation; 2 = slower (accurate) display tone emulation (default)
 #define EMULATED_CGB_DISPLAY_TONE 2
 
-typedef enum GB_MODE {
+enum GB_MODE {
     MODE_DMG,
     MODE_CGB
 };
@@ -171,7 +171,7 @@ struct CPU_REGS {
     uint16_t SP;
 };
 
-extern struct CPU_INSTRUCTION;
+struct CPU_INSTRUCTION;
 
 extern struct CPU_REGS cpu_regs;
 extern _Bool cpu_alive;
@@ -179,7 +179,7 @@ extern _Bool cpu_dma_halt;
 extern byte interrupt_master_enable;
 
 extern void cpu_reset();
-extern uint32_t cpu_step();
+extern void cpu_step();
 extern int32_t cpu_exec_cycles(int32_t clock_cycles_to_execute);
 extern void cpu_break();
 extern void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *inst_value);
@@ -307,8 +307,11 @@ extern _Bool battery_enabled;
 extern uint16_t (* active_mbc_writes_interpreter)(uint16_t offset, byte data);
 extern uint16_t (* active_mbc_reads_interpreter)(uint16_t offset);
 
+extern int ext_chip_setup();
 extern uint32_t mbc3_setup();
 extern uint32_t mbc5_setup();
+extern uint16_t mbc_interpret_write(uint16_t offset, byte data);
+extern uint16_t mbc_interpret_read(uint16_t offset);
 
 /*------------------DISPLAY/PPU--------------------*/
 

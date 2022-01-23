@@ -5,6 +5,7 @@
 // mbc1 (duh)
 
 #include <env.h>
+#include <string.h>
 
 uint32_t mbc1_interpret_write(word offset)
 {

@@ -110,7 +110,7 @@ __always_inline static void encode_joypad_byte(byte data)
     jp->unused = 3;
 }
 
-__always_inline static void sync_button_states()
+__always_inline void sync_button_states()
 {
     if (unencoded_button_state.b != button_states.b)
         if (mem.map.interrupt_enable_reg.JOYPAD)
@@ -200,8 +200,6 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
                 {
                     vram_dma_timer = 0;
                     cgb_dma_reg->type = 1;
-
-                    return 0x100;
                 }
             }
 
@@ -318,7 +316,7 @@ __always_inline void io_step()
 
                 if (vram_dma_timer == 0)
                 {
-                    cgb_dma_reg->type = 0xFF;
+                    cgb_dma_reg->b = 0xFF;
                     cpu_dma_halt = 0;
                 }
             }

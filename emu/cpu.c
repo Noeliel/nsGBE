@@ -37,62 +37,62 @@ _Bool till_carry = 0;   // flag to continue executing until the carry flag is se
 
 /* CONTROL FLOW */
 
-__always_inline static void prog_default(struct CPU_INSTRUCTION *instr)
+static void prog_default(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.PC += instr->operands_length + 1; // increase PC
 }
 
-__always_inline static void prog_jmp(struct CPU_INSTRUCTION *instr)
+static void prog_jmp(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.PC = instr->operands[0];
 }
 
 /* GENERAL INSTRUCTION HANDLERS */
 
-__always_inline static void instr_illegal(struct CPU_INSTRUCTION *instr)
+static void instr_illegal(struct CPU_INSTRUCTION *instr)
 {
     printf("CPU instructed to execute illegal opcode 0x%02X at 0x%04X. Breaking...\n", instr->opcode, cpu_regs.PC);
 
     cpu_break();
 }
 
-__always_inline static void instr_nop(struct CPU_INSTRUCTION *instr)// { /* .-. */ }
+static void instr_nop(struct CPU_INSTRUCTION *instr)// { /* .-. */ }
 {
 
 }
 
-__always_inline static void instr_STOP(struct CPU_INSTRUCTION *instr)
+static void instr_STOP(struct CPU_INSTRUCTION *instr)
 {
 
 }
 
-__always_inline static void instr_HALT(struct CPU_INSTRUCTION *instr)
+static void instr_HALT(struct CPU_INSTRUCTION *instr)
 {
     DEBUG_PRINT(("halting cpu until next interrupt...\n"));
     cpu_int_halt = 1;
 }
 
-__always_inline static void instr_LD_r_s(struct CPU_INSTRUCTION *instr) // Load register data8
+static void instr_LD_r_s(struct CPU_INSTRUCTION *instr) // Load register data8
 {
     (* (byte *)instr->operands[0]) = (* instr->operands[1]).b.l;
 }
 
-__always_inline static void instr_LD_rr_ss(struct CPU_INSTRUCTION *instr) // Load combined register data16
+static void instr_LD_rr_ss(struct CPU_INSTRUCTION *instr) // Load combined register data16
 {
     (* instr->operands[0]).w = (* instr->operands[1]).w;
 }
 
-__always_inline static void instr_LD_dd_s(struct CPU_INSTRUCTION *instr) // Load destination16 data8
+static void instr_LD_dd_s(struct CPU_INSTRUCTION *instr) // Load destination16 data8
 {
     mem_write((* instr->operands[0]).w, (* (byte *)instr->operands[1]) & 0xFF);
 }
 
-__always_inline static void instr_LD_dd_ss(struct CPU_INSTRUCTION *instr) // Load destination16 data16
+static void instr_LD_dd_ss(struct CPU_INSTRUCTION *instr) // Load destination16 data16
 {
     mem_write_16((* instr->operands[0]).w, (* instr->operands[1]));
 }
 
-__always_inline static void instr_INC_r(struct CPU_INSTRUCTION *instr) // Increase register
+static void instr_INC_r(struct CPU_INSTRUCTION *instr) // Increase register
 {
     byte *reg = (byte *)instr->operands[0];
     (* reg)++;
@@ -102,12 +102,12 @@ __always_inline static void instr_INC_r(struct CPU_INSTRUCTION *instr) // Increa
     cpu_regs.F.H = (((* reg) & 0xF) == 0);
 }
 
-__always_inline static void instr_INC_rr(struct CPU_INSTRUCTION *instr) // Increase combined register
+static void instr_INC_rr(struct CPU_INSTRUCTION *instr) // Increase combined register
 {
     (* instr->operands[0]).w++;
 }
 
-__always_inline static void instr_DEC_r(struct CPU_INSTRUCTION *instr) // Decrease register
+static void instr_DEC_r(struct CPU_INSTRUCTION *instr) // Decrease register
 {
     byte *reg = (byte *)instr->operands[0];
     (* reg)--;
@@ -117,12 +117,12 @@ __always_inline static void instr_DEC_r(struct CPU_INSTRUCTION *instr) // Decrea
     cpu_regs.F.H = (((* reg) & 0xF) == 0xF);
 }
 
-__always_inline static void instr_DEC_rr(struct CPU_INSTRUCTION *instr) // Decrease combined register
+static void instr_DEC_rr(struct CPU_INSTRUCTION *instr) // Decrease combined register
 {
     (* instr->operands[0]).w--;
 }
 
-__always_inline static void instr_INC_dd(struct CPU_INSTRUCTION *instr) // Increase data8 at destination16
+static void instr_INC_dd(struct CPU_INSTRUCTION *instr) // Increase data8 at destination16
 {
     uint16_t offset = (* instr->operands[0]).w;
 
@@ -139,7 +139,7 @@ __always_inline static void instr_INC_dd(struct CPU_INSTRUCTION *instr) // Incre
     cpu_regs.F.N = 0;
 }
 
-__always_inline static void instr_DEC_dd(struct CPU_INSTRUCTION *instr) // Decrease data8 at destination16
+static void instr_DEC_dd(struct CPU_INSTRUCTION *instr) // Decrease data8 at destination16
 {
     uint16_t offset = (* instr->operands[0]).w;
 
@@ -156,7 +156,7 @@ __always_inline static void instr_DEC_dd(struct CPU_INSTRUCTION *instr) // Decre
     cpu_regs.F.N = 1;
 }
 
-__always_inline static void instr_AND_s(struct CPU_INSTRUCTION *instr)
+static void instr_AND_s(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.A &= (* (byte *)instr->operands[0]);
 
@@ -166,7 +166,7 @@ __always_inline static void instr_AND_s(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.C = 0;
 }
 
-__always_inline static void instr_ADD_r_s(struct CPU_INSTRUCTION *instr) // Add register data8
+static void instr_ADD_r_s(struct CPU_INSTRUCTION *instr) // Add register data8
 {
     // todo: test
     uint16_t result = (* (byte *)instr->operands[0]) + (* (byte *)instr->operands[1]);
@@ -183,7 +183,7 @@ __always_inline static void instr_ADD_r_s(struct CPU_INSTRUCTION *instr) // Add 
       result, cpu_regs.F.Z, cpu_regs.F.N, cpu_regs.F.H, cpu_regs.F.C);
 }
 
-__always_inline static void instr_ADC_r_s(struct CPU_INSTRUCTION *instr) // Add register data8 + carry flag
+static void instr_ADC_r_s(struct CPU_INSTRUCTION *instr) // Add register data8 + carry flag
 {
     byte *reg = (byte *)instr->operands[0];
     byte *val = (byte *)instr->operands[1];
@@ -199,7 +199,7 @@ __always_inline static void instr_ADC_r_s(struct CPU_INSTRUCTION *instr) // Add 
     cpu_regs.F.Z = ((* reg) == 0);
 }
 
-__always_inline static void instr_ADD_rr_rr(struct CPU_INSTRUCTION *instr) // Add combined register combined register
+static void instr_ADD_rr_rr(struct CPU_INSTRUCTION *instr) // Add combined register combined register
 {
     uint32_t result = (* instr->operands[0]).w + (* instr->operands[1]).w;
     cpu_regs.F.H = ((result & 0xFFF) < ((* instr->operands[0]).w & 0xFFF));
@@ -210,7 +210,7 @@ __always_inline static void instr_ADD_rr_rr(struct CPU_INSTRUCTION *instr) // Ad
     cpu_regs.F.N = 0;
 }
 
-__always_inline static void instr_SUB_r(struct CPU_INSTRUCTION *instr) // Sub register (from A); untested
+static void instr_SUB_r(struct CPU_INSTRUCTION *instr) // Sub register (from A); untested
 {
     byte value = (* (byte *)instr->operands[0]);
 
@@ -223,7 +223,7 @@ __always_inline static void instr_SUB_r(struct CPU_INSTRUCTION *instr) // Sub re
     cpu_regs.F.N = 1;
 }
 
-__always_inline static void instr_SUB_ss(struct CPU_INSTRUCTION *instr) // Sub data8 (from A)
+static void instr_SUB_ss(struct CPU_INSTRUCTION *instr) // Sub data8 (from A)
 {
     byte value = mem_read((* instr->operands[0]).w);
 
@@ -236,7 +236,7 @@ __always_inline static void instr_SUB_ss(struct CPU_INSTRUCTION *instr) // Sub d
     cpu_regs.F.N = 1;
 }
 
-__always_inline static void instr_XOR_s(struct CPU_INSTRUCTION *instr)
+static void instr_XOR_s(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.A = cpu_regs.A ^ (* (byte *)instr->operands[0]);
 
@@ -246,7 +246,7 @@ __always_inline static void instr_XOR_s(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.C = 0;
 }
 
-__always_inline static void instr_XOR_ss(struct CPU_INSTRUCTION *instr)
+static void instr_XOR_ss(struct CPU_INSTRUCTION *instr)
 {
     byte value = mem_read((* instr->operands[0]).w);
 
@@ -258,7 +258,7 @@ __always_inline static void instr_XOR_ss(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.C = 0;
 }
 
-__always_inline static void instr_SBC_r_s(struct CPU_INSTRUCTION *instr)
+static void instr_SBC_r_s(struct CPU_INSTRUCTION *instr)
 {
     byte *reg = (byte *)instr->operands[0];
     byte *val = (byte *)instr->operands[1];
@@ -274,7 +274,7 @@ __always_inline static void instr_SBC_r_s(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.Z = ((* reg) == 0);
 }
 
-__always_inline static void instr_CPL(struct CPU_INSTRUCTION *instr) // untested (guessing it's bitwise complement)
+static void instr_CPL(struct CPU_INSTRUCTION *instr) // untested (guessing it's bitwise complement)
 {
     cpu_regs.A = ~cpu_regs.A;
 
@@ -282,7 +282,7 @@ __always_inline static void instr_CPL(struct CPU_INSTRUCTION *instr) // untested
     cpu_regs.F.H = 1;
 }
 
-__always_inline static void instr_RLCA(struct CPU_INSTRUCTION *instr) // Rotate register A through carry left
+static void instr_RLCA(struct CPU_INSTRUCTION *instr) // Rotate register A through carry left
 {
     cpu_regs.F.C = (cpu_regs.A > 0x7F);
 
@@ -294,7 +294,7 @@ __always_inline static void instr_RLCA(struct CPU_INSTRUCTION *instr) // Rotate 
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_RRCA(struct CPU_INSTRUCTION *instr) // Rotate register A through carry right (not tested)
+static void instr_RRCA(struct CPU_INSTRUCTION *instr) // Rotate register A through carry right (not tested)
 {
     cpu_regs.F.C = cpu_regs.A & 1;
 
@@ -306,7 +306,7 @@ __always_inline static void instr_RRCA(struct CPU_INSTRUCTION *instr) // Rotate 
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_RLA(struct CPU_INSTRUCTION *instr) // Rotate register A left
+static void instr_RLA(struct CPU_INSTRUCTION *instr) // Rotate register A left
 {
     byte carry = cpu_regs.F.C;
     cpu_regs.F.C = (cpu_regs.A > 0x7F);
@@ -318,7 +318,7 @@ __always_inline static void instr_RLA(struct CPU_INSTRUCTION *instr) // Rotate r
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_RRA(struct CPU_INSTRUCTION *instr) // Rotate register A right
+static void instr_RRA(struct CPU_INSTRUCTION *instr) // Rotate register A right
 {
     byte carry = cpu_regs.F.C ? 0x80 : 0;
     cpu_regs.F.C = (cpu_regs.A) & 1;
@@ -330,7 +330,7 @@ __always_inline static void instr_RRA(struct CPU_INSTRUCTION *instr) // Rotate r
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_DAA(struct CPU_INSTRUCTION *instr)
+static void instr_DAA(struct CPU_INSTRUCTION *instr)
 {
     uint16_t val = cpu_regs.A;
 
@@ -358,14 +358,14 @@ __always_inline static void instr_DAA(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.C = (val > 0xFF ? 1 : cpu_regs.F.C);
 }
 
-__always_inline static void instr_SCF(struct CPU_INSTRUCTION *instr)
+static void instr_SCF(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.F.N = 0;
     cpu_regs.F.H = 0;
     cpu_regs.F.C = 1;
 }
 
-__always_inline static void instr_CCF(struct CPU_INSTRUCTION *instr)
+static void instr_CCF(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.F.N = 0;
     cpu_regs.F.H = 0;
@@ -377,25 +377,25 @@ __always_inline static void instr_CCF(struct CPU_INSTRUCTION *instr)
 
 /* UNIQUE INSTRUCTION HANDLERS */
 
-__always_inline static void uinstr_LDD_A_lHL(struct CPU_INSTRUCTION *instr)
+static void uinstr_LDD_A_lHL(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.A = mem_read(cpu_regs.HL);
     cpu_regs.HL--;
 }
 
-__always_inline static void uinstr_LDD_lHL_A(struct CPU_INSTRUCTION *instr)
+static void uinstr_LDD_lHL_A(struct CPU_INSTRUCTION *instr)
 {
     mem_write(cpu_regs.HL, cpu_regs.A);
     cpu_regs.HL--;
 }
 
-__always_inline static void uinstr_LDI_A_lHL(struct CPU_INSTRUCTION *instr)
+static void uinstr_LDI_A_lHL(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.A = mem_read(cpu_regs.HL);
     cpu_regs.HL++;
 }
 
-__always_inline static void uinstr_LDI_lHL_A(struct CPU_INSTRUCTION *instr)
+static void uinstr_LDI_lHL_A(struct CPU_INSTRUCTION *instr)
 {
     mem_write(cpu_regs.HL, cpu_regs.A);
     cpu_regs.HL++;
@@ -405,7 +405,7 @@ __always_inline static void uinstr_LDI_lHL_A(struct CPU_INSTRUCTION *instr)
 
 /* UNSTABLE */
 
-__always_inline static void push16(word data)
+static void push16(word data)
 {
     cpu_regs.SP--;
     cpu_regs.SP--;
@@ -414,7 +414,7 @@ __always_inline static void push16(word data)
     //printf("pushing 0x%04X onto stack @0x%04X\n", data, cpu_regs.SP);
 }
 
-__always_inline static word pop16()
+static word pop16()
 {
     word value = mem_read_16(cpu_regs.SP);
 
@@ -426,7 +426,7 @@ __always_inline static word pop16()
     return value;
 }
 
-__always_inline static void push8(byte data)
+static void push8(byte data)
 {
     cpu_regs.SP--;
     mem_write(cpu_regs.SP, data);
@@ -434,7 +434,7 @@ __always_inline static void push8(byte data)
     //printf("pushing 0x%02X onto stack @0x%04X\n", data, cpu_regs.SP);
 }
 
-__always_inline static byte pop8()
+static byte pop8()
 {
     byte value = mem_read(cpu_regs.SP);
 
@@ -445,7 +445,7 @@ __always_inline static byte pop8()
     return value;
 }
 
-__always_inline static void instr_RLC_r(struct CPU_INSTRUCTION *instr) // Rotate register A through carry left
+static void instr_RLC_r(struct CPU_INSTRUCTION *instr) // Rotate register A through carry left
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -458,7 +458,7 @@ __always_inline static void instr_RLC_r(struct CPU_INSTRUCTION *instr) // Rotate
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_RLC_dd(struct CPU_INSTRUCTION *instr) // Rotate register A through carry left
+static void instr_RLC_dd(struct CPU_INSTRUCTION *instr) // Rotate register A through carry left
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -473,7 +473,7 @@ __always_inline static void instr_RLC_dd(struct CPU_INSTRUCTION *instr) // Rotat
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_RRC_r(struct CPU_INSTRUCTION *instr)
+static void instr_RRC_r(struct CPU_INSTRUCTION *instr)
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -486,7 +486,7 @@ __always_inline static void instr_RRC_r(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_RRC_dd(struct CPU_INSTRUCTION *instr)
+static void instr_RRC_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -501,7 +501,7 @@ __always_inline static void instr_RRC_dd(struct CPU_INSTRUCTION *instr)
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_RL_r(struct CPU_INSTRUCTION *instr) // do NOT use this for RLA as it has different behavior with regards to setting the Z flag
+static void instr_RL_r(struct CPU_INSTRUCTION *instr) // do NOT use this for RLA as it has different behavior with regards to setting the Z flag
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -515,7 +515,7 @@ __always_inline static void instr_RL_r(struct CPU_INSTRUCTION *instr) // do NOT 
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_RL_dd(struct CPU_INSTRUCTION *instr)
+static void instr_RL_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -531,7 +531,7 @@ __always_inline static void instr_RL_dd(struct CPU_INSTRUCTION *instr)
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_RR_r(struct CPU_INSTRUCTION *instr) // do NOT use this for RRA as it has different behavior with regards to setting the Z flag
+static void instr_RR_r(struct CPU_INSTRUCTION *instr) // do NOT use this for RRA as it has different behavior with regards to setting the Z flag
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -546,7 +546,7 @@ __always_inline static void instr_RR_r(struct CPU_INSTRUCTION *instr) // do NOT 
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_RR_dd(struct CPU_INSTRUCTION *instr)
+static void instr_RR_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -563,7 +563,7 @@ __always_inline static void instr_RR_dd(struct CPU_INSTRUCTION *instr)
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_SLA_r(struct CPU_INSTRUCTION *instr)
+static void instr_SLA_r(struct CPU_INSTRUCTION *instr)
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -576,7 +576,7 @@ __always_inline static void instr_SLA_r(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_SLA_dd(struct CPU_INSTRUCTION *instr)
+static void instr_SLA_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -591,7 +591,7 @@ __always_inline static void instr_SLA_dd(struct CPU_INSTRUCTION *instr)
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_SRA_r(struct CPU_INSTRUCTION *instr)
+static void instr_SRA_r(struct CPU_INSTRUCTION *instr)
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -604,7 +604,7 @@ __always_inline static void instr_SRA_r(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_SRA_dd(struct CPU_INSTRUCTION *instr)
+static void instr_SRA_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -619,7 +619,7 @@ __always_inline static void instr_SRA_dd(struct CPU_INSTRUCTION *instr)
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_SRL_r(struct CPU_INSTRUCTION *instr)
+static void instr_SRL_r(struct CPU_INSTRUCTION *instr)
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -633,7 +633,7 @@ __always_inline static void instr_SRL_r(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.H = 0;
 }
 
-__always_inline static void instr_SRL_dd(struct CPU_INSTRUCTION *instr)
+static void instr_SRL_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -649,7 +649,7 @@ __always_inline static void instr_SRL_dd(struct CPU_INSTRUCTION *instr)
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_CP_s(struct CPU_INSTRUCTION *instr)
+static void instr_CP_s(struct CPU_INSTRUCTION *instr)
 {
     byte previous = cpu_regs.A;
     byte value = (* (byte *)instr->operands[0]);
@@ -663,7 +663,7 @@ __always_inline static void instr_CP_s(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.N = 1;
 }
 
-__always_inline static void instr_OR_s(struct CPU_INSTRUCTION *instr)
+static void instr_OR_s(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.A |= (* (byte *)instr->operands[0]);
 
@@ -673,26 +673,26 @@ __always_inline static void instr_OR_s(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.C = 0;
 }
 
-__always_inline static void instr_RES_r(struct CPU_INSTRUCTION *instr)
+static void instr_RES_r(struct CPU_INSTRUCTION *instr)
 {
     (* (byte *)instr->operands[0]) &= 0xFF - (* (byte *)instr->operands[1]);
 }
 
-__always_inline static void instr_RES_dd(struct CPU_INSTRUCTION *instr)
+static void instr_RES_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
     val &= 0xFF - (* (byte *)instr->operands[1]);
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_BIT_r(struct CPU_INSTRUCTION *instr)
+static void instr_BIT_r(struct CPU_INSTRUCTION *instr)
 {
     cpu_regs.F.Z = (!((* (byte *)instr->operands[0]) & (* (byte *)instr->operands[1])));
     cpu_regs.F.N = 0;
     cpu_regs.F.H = 1;
 }
 
-__always_inline static void instr_BIT_dd(struct CPU_INSTRUCTION *instr)
+static void instr_BIT_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -701,19 +701,19 @@ __always_inline static void instr_BIT_dd(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.H = 1;
 }
 
-__always_inline static void instr_SET_r(struct CPU_INSTRUCTION *instr)
+static void instr_SET_r(struct CPU_INSTRUCTION *instr)
 {
     (* (byte *)instr->operands[0]) |= (* (byte *)instr->operands[1]);
 }
 
-__always_inline static void instr_SET_dd(struct CPU_INSTRUCTION *instr)
+static void instr_SET_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
     val |= (* (byte *)instr->operands[1]);
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_SWAP_r(struct CPU_INSTRUCTION *instr)
+static void instr_SWAP_r(struct CPU_INSTRUCTION *instr)
 {
     byte *reg = (byte *)instr->operands[0];
 
@@ -726,7 +726,7 @@ __always_inline static void instr_SWAP_r(struct CPU_INSTRUCTION *instr)
     cpu_regs.F.C = 0;
 }
 
-__always_inline static void instr_SWAP_dd(struct CPU_INSTRUCTION *instr)
+static void instr_SWAP_dd(struct CPU_INSTRUCTION *instr)
 {
     byte val = mem_read((* instr->operands[0]).w);
 
@@ -741,22 +741,22 @@ __always_inline static void instr_SWAP_dd(struct CPU_INSTRUCTION *instr)
     mem_write((* instr->operands[0]).w, val);
 }
 
-__always_inline static void instr_PUSH(struct CPU_INSTRUCTION *instr)
+static void instr_PUSH(struct CPU_INSTRUCTION *instr)
 {
     push16((* instr->operands[0]));
 }
 
-__always_inline static void instr_POP(struct CPU_INSTRUCTION *instr)
+static void instr_POP(struct CPU_INSTRUCTION *instr)
 {
     (* instr->operands[0]).w = pop16().w;
 }
 
-__always_inline static void instr_RST_l(struct CPU_INSTRUCTION *instr)
+static void instr_RST_l(struct CPU_INSTRUCTION *instr)
 {
     push16(word(cpu_regs.PC + instr->operands_length + 1));
 }
 
-__always_inline static void uinstr_ADD_SP_s(struct CPU_INSTRUCTION *instr)
+static void uinstr_ADD_SP_s(struct CPU_INSTRUCTION *instr)
 {
     // if you change anything in here, make sure to also adjust uinstr_LDHL_SP_s
 
@@ -776,7 +776,7 @@ __always_inline static void uinstr_ADD_SP_s(struct CPU_INSTRUCTION *instr)
     cpu_regs.SP = result & 0xFFFF;
 }
 
-__always_inline static void uinstr_LDHL_SP_s(struct CPU_INSTRUCTION *instr)
+static void uinstr_LDHL_SP_s(struct CPU_INSTRUCTION *instr)
 {
     // if you change anything in here, make sure to also adjust uinstr_ADD_SP_s
 
@@ -795,7 +795,7 @@ __always_inline static void uinstr_LDHL_SP_s(struct CPU_INSTRUCTION *instr)
     cpu_regs.HL = result & 0xFFFF;
 }
 
-__always_inline static void uinstr_JP_NZ(struct CPU_INSTRUCTION *instr)
+static void uinstr_JP_NZ(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.Z == 0)
     {
@@ -804,7 +804,7 @@ __always_inline static void uinstr_JP_NZ(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_JP_Z(struct CPU_INSTRUCTION *instr)
+static void uinstr_JP_Z(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.Z == 1)
     {
@@ -813,7 +813,7 @@ __always_inline static void uinstr_JP_Z(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_JP_NC(struct CPU_INSTRUCTION *instr)
+static void uinstr_JP_NC(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.C == 0)
     {
@@ -822,7 +822,7 @@ __always_inline static void uinstr_JP_NC(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_JP_C(struct CPU_INSTRUCTION *instr)
+static void uinstr_JP_C(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.C == 1)
     {
@@ -831,12 +831,12 @@ __always_inline static void uinstr_JP_C(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_CALL(struct CPU_INSTRUCTION *instr)
+static void uinstr_CALL(struct CPU_INSTRUCTION *instr)
 {
     push16(word(cpu_regs.PC + instr->operands_length + 1));
 }
 
-__always_inline static void uinstr_CALL_NZ(struct CPU_INSTRUCTION *instr)
+static void uinstr_CALL_NZ(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.Z == 0)
     {
@@ -846,7 +846,7 @@ __always_inline static void uinstr_CALL_NZ(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_CALL_Z(struct CPU_INSTRUCTION *instr)
+static void uinstr_CALL_Z(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.Z == 1)
     {
@@ -856,7 +856,7 @@ __always_inline static void uinstr_CALL_Z(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_CALL_NC(struct CPU_INSTRUCTION *instr)
+static void uinstr_CALL_NC(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.C == 0)
     {
@@ -866,7 +866,7 @@ __always_inline static void uinstr_CALL_NC(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_CALL_C(struct CPU_INSTRUCTION *instr)
+static void uinstr_CALL_C(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.C == 1)
     {
@@ -876,7 +876,7 @@ __always_inline static void uinstr_CALL_C(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_RET_NZ(struct CPU_INSTRUCTION *instr)
+static void uinstr_RET_NZ(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.Z == 0)
     {
@@ -887,7 +887,7 @@ __always_inline static void uinstr_RET_NZ(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_RET_Z(struct CPU_INSTRUCTION *instr)
+static void uinstr_RET_Z(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.Z == 1)
     {
@@ -898,7 +898,7 @@ __always_inline static void uinstr_RET_Z(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_RET_NC(struct CPU_INSTRUCTION *instr)
+static void uinstr_RET_NC(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.C == 0)
     {
@@ -909,7 +909,7 @@ __always_inline static void uinstr_RET_NC(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_RET_C(struct CPU_INSTRUCTION *instr)
+static void uinstr_RET_C(struct CPU_INSTRUCTION *instr)
 {
     if (cpu_regs.F.C == 1)
     {
@@ -920,19 +920,19 @@ __always_inline static void uinstr_RET_C(struct CPU_INSTRUCTION *instr)
     }
 }
 
-__always_inline static void uinstr_RETI(struct CPU_INSTRUCTION *instr)
+static void uinstr_RETI(struct CPU_INSTRUCTION *instr)
 {
     // same as EI RET, so transition to enabled immediately
     interrupt_master_enable = 1;
     DEBUG_PRINT(("returning from interrupt\n"));
 }
 
-__always_inline static void uinstr_DI(struct CPU_INSTRUCTION *instr)
+static void uinstr_DI(struct CPU_INSTRUCTION *instr)
 {
     interrupt_master_enable = 0;
 }
 
-__always_inline static void uinstr_EI(struct CPU_INSTRUCTION *instr)
+static void uinstr_EI(struct CPU_INSTRUCTION *instr)
 {
     interrupt_master_enable = 3;
 }
@@ -1027,7 +1027,7 @@ void cpu_run()
 }
 */
 
-__always_inline uint32_t cpu_step() // advance one op
+__always_inline void cpu_step() // advance one op
 {
     struct CPU_INSTRUCTION instr;
     word inst_value = word(0x1000);

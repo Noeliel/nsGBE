@@ -4,6 +4,7 @@
 
 #include <env.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #define SYSTEM_OVERCLOCK_MULTIPLIER     4
 #define EFFECTIVE_MACHINE_CLOCK_HZ      (MACHINE_CLOCK_HZ * (system_overclock ? SYSTEM_OVERCLOCK_MULTIPLIER : 1))

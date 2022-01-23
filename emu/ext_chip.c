@@ -51,6 +51,8 @@ uint32_t no_mbc_setup()
     ext_ram_bank_count = 1;
     ext_ram_banks = malloc((size_t)(ext_ram_bank_count * sizeof(byte *)));
     ext_ram_banks[0] = mem.map.cart_ram_bank_s;
+
+    return 0;
 }
 
 int ext_chip_setup()

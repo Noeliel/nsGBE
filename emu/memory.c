@@ -5,6 +5,7 @@
 // memory controller
 
 #include <env.h>
+#include <string.h>
 
 union MEMORY mem;
 

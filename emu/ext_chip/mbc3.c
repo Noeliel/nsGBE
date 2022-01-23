@@ -5,6 +5,7 @@
 // mbc3 (duh)
 
 #include <env.h>
+#include <string.h>
 #include <sys/time.h>
 
 union RTC_DH {

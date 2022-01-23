@@ -17,10 +17,11 @@
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+// todo: this most likely doesn't make much sense; redo
 #define WINDOW_VISIBLE  ((int8_t)mem.raw[WY] >= 0 && \
                          (int8_t)mem.raw[WX] >= 0 && \
-                         (int8_t)mem.raw[WY] < 144 && \
-                         (int8_t)mem.raw[WX] < 167)
+                         (uint8_t)mem.raw[WY] < 144 && \
+                         (uint8_t)mem.raw[WX] < 167)
 
 #define TILE_DATA_BLOCK_0_OFFSET 0x0
 #define TILE_DATA_BLOCK_1_OFFSET 0x800
@@ -1044,7 +1045,7 @@ void hi_test()
     next_ppu_viewport[8 * GB_FRAMEBUFFER_WIDTH + 18] = 0xFF;
 }
 
-__always_inline byte adjust_bg_color_palettes(byte index, byte low, byte high)
+__always_inline void adjust_bg_color_palettes(byte index, byte low, byte high)
 {
 #if EMULATED_CGB_DISPLAY_TONE == 2
     adjusted_bg_color_palettes_r[index] = CACGB_RED(low, high);
@@ -1061,7 +1062,7 @@ __always_inline byte adjust_bg_color_palettes(byte index, byte low, byte high)
 #endif
 }
 
-__always_inline byte adjust_obj_color_palettes(byte index, byte low, byte high)
+__always_inline void adjust_obj_color_palettes(byte index, byte low, byte high)
 {
 #if EMULATED_CGB_DISPLAY_TONE == 2
     adjusted_obj_color_palettes_r[index] = CACGB_RED(low, high);
