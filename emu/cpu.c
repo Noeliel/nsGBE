@@ -405,7 +405,7 @@ static void uinstr_LDI_lHL_A(struct CPU_INSTRUCTION *instr)
 
 /* UNSTABLE */
 
-static void push16(word data)
+__always_inline void push16(word data)
 {
     cpu_regs.SP--;
     cpu_regs.SP--;
@@ -414,7 +414,7 @@ static void push16(word data)
     //printf("pushing 0x%04X onto stack @0x%04X\n", data, cpu_regs.SP);
 }
 
-static word pop16()
+__always_inline word pop16()
 {
     word value = mem_read_16(cpu_regs.SP);
 
@@ -426,7 +426,7 @@ static word pop16()
     return value;
 }
 
-static void push8(byte data)
+__always_inline void push8(byte data)
 {
     cpu_regs.SP--;
     mem_write(cpu_regs.SP, data);
@@ -434,7 +434,7 @@ static void push8(byte data)
     //printf("pushing 0x%02X onto stack @0x%04X\n", data, cpu_regs.SP);
 }
 
-static byte pop8()
+__always_inline byte pop8()
 {
     byte value = mem_read(cpu_regs.SP);
 
