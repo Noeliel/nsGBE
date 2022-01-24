@@ -185,7 +185,7 @@ int gui_main(int argc, char **argv)
     SDL_RenderPresent(renderer);
     SDL_SetWindowTitle(window, "[ nsGBE ]");
 
-    SDL_CreateThread(system_run_event_loop, "nsgbe_core", NULL);
+    SDL_CreateThread(&system_run_event_loop, "nsgbe_core", NULL);
 
     display_notify_vblank = &handle_vblank;
 

@@ -33,7 +33,9 @@ uint16_t cgb_dma_destination;
 
 enum CGB_DMA_TYPE {
     CGB_DMA_TYPE_GENERAL_PURPOSE = 0,
-    CGB_DMA_TYPE_HBLANK = 1
+    CGB_DMA_TYPE_HBLANK = 1,
+    CGB_DMA_TRANSFER_ACTIVE = 0,
+    CGB_DMA_TRANSFER_INACTIVE = 1
 };
 
 union CGB_DMA_REG {
@@ -47,7 +49,7 @@ union CGB_DMA_REG {
 #endif
     };
     byte b;
-} *cgb_dma_reg = mem.raw + HDMA5;
+} *cgb_dma_reg = (union CGB_DMA_REG *)(mem.raw + HDMA5);
 
 /* EOF CGB stuff */
 
@@ -73,7 +75,7 @@ __always_inline void vram_dma_transfer()
         mem_write(cgb_dma_destination + i, mem_read(cgb_dma_source + i));
 
         byte remaining = 0xFF - ((vram_dma_length - (i + 1)) & 0xFF);
-        cgb_dma_reg->type = remaining;
+        cgb_dma_reg->b = remaining;
     }
 
     vram_dma_timer--;
@@ -81,12 +83,12 @@ __always_inline void vram_dma_transfer()
 
 __always_inline static void encode_joypad_byte(byte data)
 {
-    union JOYPAD_IO *jp = &data;
+    union JOYPAD_IO *jp = (union JOYPAD_IO *)&data;
 
     _Bool as_action = (jp->ACT ? 0 : 1);
     _Bool as_direction = (jp->DIR ? 0 : 1);
 
-    jp = mem.raw + IO_JOYPAD;
+    jp = (union JOYPAD_IO *)(mem.raw + IO_JOYPAD);
 
     // JOYPAD_IO bits are inverted (0 to select / press)
 
@@ -199,7 +201,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
                 if (((union CGB_DMA_REG) data).type == 0) // cancel (hblank) vram dma transfer
                 {
                     vram_dma_timer = 0;
-                    cgb_dma_reg->type = 1;
+                    cgb_dma_reg->type = CGB_DMA_TRANSFER_INACTIVE;
                 }
             }
 
@@ -212,7 +214,7 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
 
 __always_inline void io_timer_step()
 {
-    union TIMER_CONTROL_IO *tac = mem.raw + IO_TIMER_CONTROL;
+    union TIMER_CONTROL_IO *tac = (union TIMER_CONTROL_IO *)(mem.raw + IO_TIMER_CONTROL);
 
     if (!tac->enable)
     {

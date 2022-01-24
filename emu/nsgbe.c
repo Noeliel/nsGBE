@@ -6,10 +6,10 @@
 
 #include <env.h>
 
-void *biosbuffer;
+uint8_t *biosbuffer;
 uintptr_t biossize;
 
-void *rombuffer;
+uint8_t *rombuffer;
 uintptr_t romsize;
 struct ROM_HEADER *rom_header;
 
@@ -41,7 +41,7 @@ static int bios_load()
 {
     // load file
 
-    free_ptr(&biosbuffer);
+    free_ptr((void **)&biosbuffer);
 
     biossize = load_bios(&biosbuffer);
 
@@ -58,7 +58,7 @@ static int rom_load()
 {
     // load file
 
-    free_ptr(&rombuffer);
+    free_ptr((void **)&rombuffer);
 
     romsize = load_rom(&rombuffer);
 
@@ -68,7 +68,7 @@ static int rom_load()
         return 0;
     }
 
-    rom_header = rombuffer + 0x100;
+    rom_header = (struct ROM_HEADER *)(rombuffer + 0x100);
 
     printf("\n");
     printf("nsGBE - no special Game Boy Emulator\n");
@@ -94,7 +94,7 @@ static int rom_load()
 
 void battery_load(byte **battery_banks, uint16_t bank_count)
 {
-    void *battery_buffer;
+    uint8_t *battery_buffer;
     long battery_size;
 
     // load file
@@ -166,8 +166,10 @@ void system_reset()
         fake_dmg_bootrom();
 }
 
-void system_run_event_loop()
+int system_run_event_loop()
 {
     system_resume();
     clock_loop();
+
+    return 0;
 }

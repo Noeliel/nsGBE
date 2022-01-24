@@ -69,7 +69,7 @@ static int file_write(char *path, uint8_t *buffer, size_t size)
 
 long load_rom(uint8_t **buffer)
 {
-    free_ptr(&batterypath);
+    free_ptr((void **)&batterypath);
 
     size_t path_length = strlen(rompath);
 

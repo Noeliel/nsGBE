@@ -157,9 +157,9 @@ uint32_t mbc3_setup()
     printf("[Info] Using MBC3.\n");
 
     for (uint16_t i = 1; i < ext_ram_bank_count; i++)
-        free_ptr(&ext_ram_banks[i]);
+        free_ptr((void **)&ext_ram_banks[i]);
 
-    free_ptr(&ext_ram_banks);
+    free_ptr((void **)&ext_ram_banks);
 
     active_mbc_writes_interpreter = &mbc3_interpret_write;
     active_mbc_reads_interpreter = &mbc3_interpret_read;

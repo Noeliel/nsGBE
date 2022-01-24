@@ -12,7 +12,7 @@ struct CPU_INSTRUCTION {
     uint32_t clock_cycles;
     uint8_t operands_length; // in bytes
     word *operands[2];
-    uint8_t *description;
+    const char *description;
     void (*handler)(struct CPU_INSTRUCTION *);
     void (*progresser)(struct CPU_INSTRUCTION *);
 };
@@ -44,7 +44,7 @@ static void prog_default(struct CPU_INSTRUCTION *instr)
 
 static void prog_jmp(struct CPU_INSTRUCTION *instr)
 {
-    cpu_regs.PC = instr->operands[0];
+    cpu_regs.PC = (uint16_t)(uintptr_t)instr->operands[0];
 }
 
 /* GENERAL INSTRUCTION HANDLERS */
@@ -882,7 +882,7 @@ static void uinstr_RET_NZ(struct CPU_INSTRUCTION *instr)
     {
         instr->clock_cycles = 20;
         word value = pop16();
-        instr->operands[0] = value.w;
+        instr->operands[0] = (word *)(uintptr_t)value.w;
         instr->progresser = &prog_jmp;
     }
 }
@@ -893,7 +893,7 @@ static void uinstr_RET_Z(struct CPU_INSTRUCTION *instr)
     {
         instr->clock_cycles = 20;
         word value = pop16();
-        instr->operands[0] = value.w;
+        instr->operands[0] = (word *)(uintptr_t)value.w;
         instr->progresser = &prog_jmp;
     }
 }
@@ -904,7 +904,7 @@ static void uinstr_RET_NC(struct CPU_INSTRUCTION *instr)
     {
         instr->clock_cycles = 20;
         word value = pop16();
-        instr->operands[0] = value.w;
+        instr->operands[0] = (word *)(uintptr_t)value.w;
         instr->progresser = &prog_jmp;
     }
 }
@@ -915,7 +915,7 @@ static void uinstr_RET_C(struct CPU_INSTRUCTION *instr)
     {
         instr->clock_cycles = 20;
         word value = pop16();
-        instr->operands[0] = value.w;
+        instr->operands[0] = (word *)(uintptr_t)value.w;
         instr->progresser = &prog_jmp;
     }
 }
@@ -1404,7 +1404,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 1;
                 inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "JR r8";
                 break;
 
@@ -1469,7 +1469,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (zero)
                     inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value->w;
+                    instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 }
                 else
                 {
@@ -1540,7 +1540,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (not zero)
                     inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value->w;
+                    instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 }
                 else
                 {
@@ -1609,7 +1609,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (carry)
                     inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value->w;
+                    instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 }
                 else
                 {
@@ -1680,7 +1680,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                     instr->progresser = &prog_jmp;
                     instr->clock_cycles = 12; // or 8 if action is not taken (not carry)
                     inst_value->w = cpu_regs.PC + (int8_t)mem_read(cpu_regs.PC + 1) + 2;
-                    instr->operands[0] = inst_value->w;
+                    instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 }
                 else
                 {
@@ -2744,7 +2744,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "JP NZ,a16";
                 break;
 
@@ -2754,7 +2754,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 16;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "JP a16";
                 break;
 
@@ -2763,7 +2763,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "CALL NZ,a16";
                 break;
 
@@ -2803,7 +2803,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
                 (* inst_value) = pop16();
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "RET";
                 break;
 
@@ -2812,7 +2812,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "JP Z,a16";
                 break;
 
@@ -2821,7 +2821,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "CALL Z,a16";
                 break;
 
@@ -2831,7 +2831,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 24;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "CALL a16";
                 break;
 
@@ -2849,7 +2849,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_RST_l;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                instr->operands[0] = 0x08;
+                instr->operands[0] = (word *)0x08;
                 instr->description = "RST 08H";
                 break;
 
@@ -2871,7 +2871,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "JP NC,a16";
                 break;
 
@@ -2880,7 +2880,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "CALL NC,a16";
                 break;
 
@@ -2904,7 +2904,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_RST_l;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                instr->operands[0] = 0x10;
+                instr->operands[0] = (word *)0x10;
                 instr->description = "RST 10H";
                 break;
 
@@ -2919,7 +2919,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
                 (* inst_value) = pop16();
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "RETI";
                 break;
 
@@ -2928,7 +2928,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "JP C,a16";
                 break;
 
@@ -2937,7 +2937,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->clock_cycles = 12;
                 instr->operands_length = 2;
                 (* inst_value) = mem_read_16(cpu_regs.PC + 1);
-                instr->operands[0] = inst_value->w;
+                instr->operands[0] = (word *)(uintptr_t)inst_value->w;
                 instr->description = "CALL C,a16";
                 break;
 
@@ -2955,7 +2955,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_RST_l;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                instr->operands[0] = 0x18;
+                instr->operands[0] = (word *)0x18;
                 instr->description = "RST 18H";
                 break;
 
@@ -3008,7 +3008,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_RST_l;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                instr->operands[0] = 0x20;
+                instr->operands[0] = (word *)0x20;
                 instr->description = "RST 20H";
                 break;
 
@@ -3025,7 +3025,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_nop;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 4;
-                instr->operands[0] = cpu_regs.HL;
+                instr->operands[0] = (word *)(uintptr_t)cpu_regs.HL;
                 instr->description = "JP (HL)";
                 break;
 
@@ -3052,7 +3052,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_RST_l;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                instr->operands[0] = 0x28;
+                instr->operands[0] = (word *)0x28;
                 instr->description = "RST 28H";
                 break;
 
@@ -3112,7 +3112,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_RST_l;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                instr->operands[0] = 0x30;
+                instr->operands[0] = (word *)0x30;
                 instr->description = "RST 30H";
                 break;
 
@@ -3163,7 +3163,7 @@ __always_inline void cpu_next_instruction(struct CPU_INSTRUCTION *instr, word *i
                 instr->handler = &instr_RST_l;
                 instr->progresser = &prog_jmp;
                 instr->clock_cycles = 16;
-                instr->operands[0] = 0x38;
+                instr->operands[0] = (word *)0x38;
                 instr->description = "RST 38H";
                 break;
 

@@ -453,7 +453,7 @@ __always_inline static void draw_sprites_line_dmg(uint8_t line)
         // if y is in sprite (handle 8x8 or 8x16)
             // write sprite pixel (x,y) to active_view_port
 
-        struct DMG_SPRITE_ATTRIBUTE *spr_attrs = mem.map.sprite_attr_table + ((oam_index - 1) * 4);
+        struct DMG_SPRITE_ATTRIBUTE *spr_attrs = (struct DMG_SPRITE_ATTRIBUTE *)(mem.map.sprite_attr_table + ((oam_index - 1) * 4));
 
         int16_t real_sprite_origin_y = (spr_attrs->pos_y - 16);
         int16_t real_sprite_origin_x = (spr_attrs->pos_x - 8);
@@ -564,7 +564,7 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
 
         uint16_t bg_tile_map = bg_tile_map_base + bg_map_tile_index_x + (bg_map_tile_index_y * 32);
 
-        bg_map_attributes = cgb_extra_vram_bank + bg_tile_map;
+        bg_map_attributes = (union CGB_BG_MAP_ATTRIBUTES *)(cgb_extra_vram_bank + bg_tile_map);
 
         // seems fine
         // bg tilemap is 32*32 tiles, layout is row by row
@@ -674,7 +674,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
 
         uint16_t window_tile_map = window_tile_map_base + window_map_tile_index_x + (window_map_tile_index_y * 32);
 
-        bg_map_attributes = cgb_extra_vram_bank + window_tile_map;
+        bg_map_attributes = (union CGB_BG_MAP_ATTRIBUTES *)(cgb_extra_vram_bank + window_tile_map);
 
         // seems fine
         // window tilemap is 32*32 tiles, layout is row by row
@@ -762,7 +762,7 @@ __always_inline static void draw_sprites_line_cgb(uint8_t line)
         // if y is in sprite (handle 8x8 or 8x16)
             // write sprite pixel (x,y) to active_view_port
 
-        struct CGB_SPRITE_ATTRIBUTE *spr_attrs = mem.map.sprite_attr_table + ((oam_index - 1) * 4);
+        struct CGB_SPRITE_ATTRIBUTE *spr_attrs = (struct CGB_SPRITE_ATTRIBUTE *)(mem.map.sprite_attr_table + ((oam_index - 1) * 4));
 
         int16_t real_sprite_origin_y = (spr_attrs->pos_y - 16);
         int16_t real_sprite_origin_x = (spr_attrs->pos_x - 8);
@@ -1084,8 +1084,8 @@ void ppu_reset()
     ppu_alive = 1;
 
     // set up registers by pointing them to the correct locations in memory
-    ppu_regs.lcdc = mem.raw + LCDC;
-    ppu_regs.stat = mem.raw + STAT;
+    ppu_regs.lcdc = (union PPU_LCDC *)(mem.raw + LCDC);
+    ppu_regs.stat = (union PPU_STAT *)(mem.raw + STAT);
 
     ppu_regs.stat->mode = PPU_OAM_READ_MODE;
 
@@ -1098,13 +1098,13 @@ __always_inline uint16_t ppu_interpret_read(uint16_t offset)
     {
         if (offset == BCPD)
         {
-            color_palette_spec = mem.raw + BCPS;
+            color_palette_spec = (union CGB_COLOR_PALETTE_SPECIFICATION *)(mem.raw + BCPS);
             return (0x100 | rgb_bg_color_palettes[color_palette_spec->index]);
         }
 
         if (offset == OCPD)
         {
-            color_palette_spec = mem.raw + OCPS;
+            color_palette_spec = (union CGB_COLOR_PALETTE_SPECIFICATION *)(mem.raw + OCPS);
             return (0x100 | rgb_obj_color_palettes[color_palette_spec->index]);
         }
     }
@@ -1138,7 +1138,7 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
     {
         if (offset == BCPD)
         {
-            color_palette_spec = mem.raw + BCPS;
+            color_palette_spec = (union CGB_COLOR_PALETTE_SPECIFICATION *)(mem.raw + BCPS);
 
             rgb_bg_color_palettes[color_palette_spec->index] = data;
 
@@ -1155,7 +1155,7 @@ __always_inline uint16_t ppu_interpret_write(uint16_t offset, byte data)
 
         if (offset == OCPD)
         {
-            color_palette_spec = mem.raw + OCPS;
+            color_palette_spec = (union CGB_COLOR_PALETTE_SPECIFICATION *)(mem.raw + OCPS);
 
             rgb_obj_color_palettes[color_palette_spec->index] = data;
 

@@ -65,7 +65,7 @@ extern _Bool system_overclock;
 extern void system_reset();
 
 // launch this in a new thread to run the core in a self-contained timed event loop
-extern void system_run_event_loop();
+extern int system_run_event_loop();
 
 // call either of these if you wish to implement your own event loop
 extern void clock_perform_sleep_cycle_ticks(); // untimed

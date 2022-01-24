@@ -44,9 +44,9 @@ static void init_random_ram() // todo: better; currently not in use
 uint32_t no_mbc_setup()
 {
     for (uint16_t i = 1; i < ext_ram_bank_count; i++)
-        free_ptr(&ext_ram_banks[i]);
+        free_ptr((void **)&ext_ram_banks[i]);
 
-    free_ptr(&ext_ram_banks);
+    free_ptr((void **)&ext_ram_banks);
 
     ext_ram_bank_count = 1;
     ext_ram_banks = malloc((size_t)(ext_ram_bank_count * sizeof(byte *)));
@@ -57,7 +57,7 @@ uint32_t no_mbc_setup()
 
 int ext_chip_setup()
 {
-    free_ptr(&rom_banks);
+    free_ptr((void **)&rom_banks);
 
     active_mbc_writes_interpreter = &generic_mbc_interpret_write;
     active_mbc_reads_interpreter = &generic_mbc_interpret_read;

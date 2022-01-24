@@ -66,10 +66,10 @@ enum GB_MODE {
 
 extern enum GB_MODE gb_mode;
 
-extern void *rombuffer;
+extern uint8_t *rombuffer;
 extern uintptr_t romsize;
 
-extern void *biosbuffer;
+extern uint8_t *biosbuffer;
 extern uintptr_t biossize;
 
 extern void battery_load(byte **battery_banks, uint16_t bank_count);
