@@ -15,7 +15,7 @@
 byte dma_byte;
 uint16_t oam_dma_timer = 0;
 
-uint32_t divider_counter;
+uint16_t divider_counter;
 uint32_t timer_counter;
 
 union BUTTON_STATE unencoded_button_state; // local copy of button_states
@@ -162,12 +162,14 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
 
     if (offset == IO_DIVIDER)
     {
+        divider_counter = 0;
         mem.raw[IO_DIVIDER] = 0;
         return 0x100;
     }
 
     if (offset == IO_TIMER)
     {
+        // timer_counter = 0; // ?
         mem.raw[IO_TIMER] = 0;
         return 0x100;
     }
@@ -210,6 +212,12 @@ __always_inline uint16_t io_interpret_write(uint16_t offset, byte data)
     }
 
     return 0;
+}
+
+__always_inline void io_divider_step()
+{
+    divider_counter++;
+    mem.raw[IO_DIVIDER] = (divider_counter >> 8) & 0xFF;
 }
 
 __always_inline void io_timer_step()
@@ -271,14 +279,7 @@ __always_inline void io_step()
     if (oam_dma_timer > 0)
         oam_dma_transfer();
 
-    divider_counter++;
-
-    if (divider_counter > 256)
-    {
-        mem.raw[IO_DIVIDER] += 1;
-        divider_counter = 0;
-    }
-
+    io_divider_step();
     io_timer_step();
 
     if (gb_mode == MODE_CGB)
@@ -334,7 +335,7 @@ __always_inline void io_step()
 __always_inline int32_t io_exec_cycles(int32_t clock_cycles_to_execute)
 {
     for (int32_t io_exec_cycle_counter = 0; io_exec_cycle_counter < clock_cycles_to_execute; io_exec_cycle_counter++)
-            io_step();
+        io_step();
 
     return 0;
 }
