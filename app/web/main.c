@@ -119,8 +119,8 @@ void system_prepare()
     emscripten_set_main_loop(sdl_renderloop, 0, 0);
 }
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
     EM_ASM_({
         FS.mkdir('/nsGBE');
         FS.mount(IDBFS, {}, '/nsGBE');

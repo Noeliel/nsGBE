@@ -102,8 +102,8 @@ static void catch_exit(int signal_num)
     exit(0);
 }
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
     if (argc != 2)
         exit(0);
 

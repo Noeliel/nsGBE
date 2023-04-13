@@ -101,8 +101,8 @@ static void catch_exit(int signal_num)
     exit(0);
 }
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
     pthread_t core_thread;
     pthread_attr_t core_thread_attributes;
 

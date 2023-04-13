@@ -531,8 +531,6 @@ __always_inline static void draw_sprites_line_dmg(uint8_t line)
 
 __always_inline static void draw_background_line_cgb(uint8_t line)
 {
-    byte color = 0x00;
-
     byte scx = mem.raw[SCX];
     byte scy = mem.raw[SCY];
 
@@ -637,8 +635,6 @@ __always_inline static void draw_background_line_cgb(uint8_t line)
 
 __always_inline static void draw_window_line_cgb(uint8_t line)
 {
-    byte color = 0x00;
-
     byte wx = mem.raw[WX];
     byte wy = mem.raw[WY];
 
@@ -749,8 +745,6 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
 
 __always_inline static void draw_sprites_line_cgb(uint8_t line)
 {
-    byte color = 0x00;
-
     uint16_t sprite_data_base_block_0 = SPRITE_DATA_BLOCK_0_OFFSET;
     uint16_t sprite_data_base_block_1 = SPRITE_DATA_BLOCK_1_OFFSET;
 
