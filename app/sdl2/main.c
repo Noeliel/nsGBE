@@ -10,9 +10,9 @@
 
 #include <nsgbe.h>
 
-char *rompath;
-char *biospath;
-char *batterypath;
+char *rompath = NULL;
+char *biospath = NULL;
+char *batterypath = NULL;
 
 extern int gui_main(int argc, char **argv);
 

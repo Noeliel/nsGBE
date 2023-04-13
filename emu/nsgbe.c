@@ -6,12 +6,12 @@
 
 #include <env.h>
 
-uint8_t *biosbuffer;
+uint8_t *biosbuffer = NULL;
 uintptr_t biossize;
 
-uint8_t *rombuffer;
+uint8_t *rombuffer = NULL;
 uintptr_t romsize;
-struct ROM_HEADER *rom_header;
+struct ROM_HEADER *rom_header = NULL;
 
 enum GB_MODE gb_mode;
 

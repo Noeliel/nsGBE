@@ -18,8 +18,8 @@
 
 int gui_main();
 
-char *rompath;
-char *biospath;
+char *rompath = NULL;
+char *biospath = NULL;
 char batterypath[32];
 
 __always_inline void free_ptr(void **ptr)
