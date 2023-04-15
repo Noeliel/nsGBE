@@ -6,19 +6,19 @@
 
 #include <env.h>
 
-byte **rom_banks/*[0x4000]*/;
-byte **ext_ram_banks/*[0x2000]*/;
+byte **rom_banks = NULL /*[0x4000]*/;
+byte **ext_ram_banks = NULL /*[0x2000]*/;
 word active_rom_bank = word(0x0001);
 word active_ext_ram_bank = word(0x0000); // most games only have up to 256 rom banks, still there are some with more, hence using word
 
 uint16_t rom_bank_count = 2;
-uint16_t ext_ram_bank_count = 1;
+uint16_t ext_ram_bank_count = 0;
 
 _Bool ext_ram_enabled = 1;
 _Bool battery_enabled = 0;
 
-uint16_t (* active_mbc_writes_interpreter)(uint16_t offset, byte data);
-uint16_t (* active_mbc_reads_interpreter)(uint16_t offset);
+uint16_t (* active_mbc_writes_interpreter)(uint16_t offset, byte data) = NULL;
+uint16_t (* active_mbc_reads_interpreter)(uint16_t offset) = NULL;
 
 uint16_t generic_mbc_interpret_write(uint16_t offset, byte data);
 uint16_t generic_mbc_interpret_read(uint16_t offset);
