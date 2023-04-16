@@ -58,11 +58,15 @@ extern int save_battery(uint8_t *buffer, size_t size);
 
 /*--------------------NSGBE----------------------*/
 
+// system control function results
+#define NSGBE_OK    1
+#define NSGBE_ERR   0
+
 // frontend can toggle system overclock by changing this bool
 extern _Bool system_overclock;
 
 // run this at least once before launching the event loop
-extern void system_reset();
+extern int system_reset();
 
 // launch this in a new thread to run the core in a self-contained timed event loop
 extern int system_run_event_loop();

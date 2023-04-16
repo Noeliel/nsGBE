@@ -48,10 +48,10 @@ static int bios_load()
     if (biossize == 0)
     {
         printf("Failed to load bios file.\n");
-        return 0;
+        return NSGBE_ERR;
     }
 
-    return 1;
+    return NSGBE_OK;
 }
 
 static int rom_load()
@@ -65,7 +65,7 @@ static int rom_load()
     if (romsize == 0)
     {
         printf("Failed to load rom file.\n");
-        return 0;
+        return NSGBE_ERR;
     }
 
     rom_header = (struct ROM_HEADER *)(rombuffer + 0x100);
@@ -89,7 +89,7 @@ static int rom_load()
     printf("Header checksum is %s\n", (rom_header->header_checksum == calc_header_checksum(rombuffer) ? "valid" : "invalid"));
     printf("------------------------------------\n\n");
 
-    return 1;
+    return NSGBE_OK;
 }
 
 void battery_load(byte **battery_banks, uint16_t bank_count)
@@ -134,10 +134,10 @@ void write_battery()
         battery_save(ext_ram_banks, ext_ram_bank_count);
 }
 
-void system_reset()
+int system_reset()
 {
     if (!rom_load())
-        return;
+        return NSGBE_ERR;
 
     if (rom_header->gbc_flag == 0xC0)
     {
@@ -164,6 +164,8 @@ void system_reset()
         fake_cgb_bootrom();
     else
         fake_dmg_bootrom();
+
+    return NSGBE_OK;
 }
 
 int system_run_event_loop()
@@ -171,5 +173,5 @@ int system_run_event_loop()
     system_resume();
     clock_loop();
 
-    return 0;
+    return NSGBE_OK;
 }

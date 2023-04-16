@@ -190,7 +190,7 @@ int ext_chip_setup()
 
         default:
             printf("Unsupported cartridge type!\n\n");
-            exit(0);
+            exit(EXIT_FAILURE);
             break;
 
     }

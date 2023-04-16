@@ -98,7 +98,7 @@ int save_battery(uint8_t *buffer, size_t size)
 static void catch_exit(int signal_num)
 {
     write_battery();
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     pthread_attr_t core_thread_attributes;
 
     if (argc != 2)
-        exit(0);
+        return EXIT_FAILURE;
 
     if (signal(SIGTERM, catch_exit) == SIG_ERR) {
         printf("Failed to set up SIGTERM handler.\n");
@@ -125,7 +125,9 @@ int main(int argc, char **argv)
     }
 
     rompath = argv[1];
-    system_reset();
+
+    if (!system_reset())
+        return EXIT_FAILURE;
 
 #define LAUNCH_WITH_GUI 1
 #ifdef LAUNCH_WITH_GUI
@@ -136,5 +138,5 @@ int main(int argc, char **argv)
     system_run_event_loop();
 #endif
 
-    return 0;
+    return EXIT_SUCCESS;
 }

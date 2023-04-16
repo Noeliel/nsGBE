@@ -109,7 +109,7 @@ int save_battery(uint8_t *buffer, size_t size)
 static void catch_exit(int signal_num)
 {
     write_battery();
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 extern void sdl_renderloop();
@@ -134,5 +134,5 @@ int main(int argc, char **argv)
 
     gui_main();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
