@@ -59,7 +59,6 @@ add_executable(
 
 target_include_directories(
     ${PROJECT_NAME} PUBLIC
-    ../../emu
     PkgConfig::GTKPLUS
 )
 

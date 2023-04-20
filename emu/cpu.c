@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: LGPL-2.0-only
 
-#include <env.h>
+#include "env.h"
 
 #define SHOULD_INT(interrupt) ((mem.map.interrupt_flag_reg.interrupt) \
                             && (mem.map.interrupt_enable_reg.interrupt))

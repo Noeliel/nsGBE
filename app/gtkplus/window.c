@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: LGPL-2.0-only
 
 #include <gtk/gtk.h>
-#include <nsgbe.h>
+#include "../../emu/nsgbe.h"
 
 #define WINDOW_TITLE_FORMATTER "[ nsGBE ] [ %d fps ]"
 

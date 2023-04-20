@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: LGPL-2.0-only
 
-#include <env.h>
+#include "env.h"
 
 #define IO_SERIAL_CONTROL  0xFF02
 #define IO_BOOTROM_CONTROL 0xFF50

@@ -10,7 +10,7 @@
 // ...variations based on sprite count; here, we just have the longest possible hblank period.
 // -> this may fail some tests, but it should be good enough for most games
 
-#include <env.h>
+#include "env.h"
 
 #ifndef EMSCRIPTEN
 #include <pthread.h>

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: LGPL-2.0-only
 
 #include <SDL2/SDL.h>
-#include <nsgbe.h>
+#include "../../emu/nsgbe.h"
 
 #ifdef EMSCRIPTEN
 #include <emscripten.h>

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include <nsgbe.h>
+#include "../../emu/nsgbe.h"
 
 char *rompath = NULL;
 char *biospath = NULL;

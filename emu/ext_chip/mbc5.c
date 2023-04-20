@@ -4,7 +4,7 @@
 
 // mbc5 (duh)
 
-#include <env.h>
+#include "../env.h"
 #include <string.h>
 
 extern _Bool ext_ram_enabled;

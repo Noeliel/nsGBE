@@ -4,7 +4,7 @@
 
 /* nsGBE - no special Game Boy Emulator */
 
-#include <env.h>
+#include "env.h"
 
 uint8_t *biosbuffer = NULL;
 uintptr_t biossize;

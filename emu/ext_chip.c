@@ -4,7 +4,7 @@
 
 // mbc and other peripherals
 
-#include <env.h>
+#include "env.h"
 
 byte **rom_banks = NULL /*[0x4000]*/;
 byte **ext_ram_banks = NULL /*[0x2000]*/;

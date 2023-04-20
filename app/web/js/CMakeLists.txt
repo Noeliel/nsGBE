@@ -49,7 +49,6 @@ add_executable(
 
 target_include_directories(
     ${PROJECT_NAME}.js PUBLIC
-    ../../../emu
 )
 
 target_link_libraries(

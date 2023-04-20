@@ -4,7 +4,7 @@
 
 #include <sys/time.h>
 #include <SDL2/SDL.h>
-#include <nsgbe.h>
+#include "../../emu/nsgbe.h"
 
 #define WINDOW_TITLE_FORMATTER "[ nsGBE ] [ %d fps ]"
 
