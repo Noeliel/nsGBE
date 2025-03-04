@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: LGPL-2.0-only
 
+#include <sys/time.h>
 #include <gtk/gtk.h>
 #include "../../emu/nsgbe.h"
 
@@ -266,7 +267,7 @@ static void activate(GtkApplication* app, gpointer user_data)
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     //gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
     gtk_window_set_default_size(GTK_WINDOW(window), GB_FRAMEBUFFER_WIDTH * SCREEN_SCALE, GB_FRAMEBUFFER_HEIGHT * SCREEN_SCALE);
-    gtk_container_set_border_width(GTK_WINDOW(window), 0);
+    gtk_container_set_border_width((GtkContainer *)GTK_WINDOW(window), 0);
 
     g_signal_connect(window, "key_press_event", G_CALLBACK(handle_key_press), NULL);
     g_signal_connect(window, "key_release_event", G_CALLBACK(handle_key_release), NULL);
