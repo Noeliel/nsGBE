@@ -64,7 +64,7 @@ byte bg_color_indices[GB_FRAMEBUFFER_WIDTH * GB_FRAMEBUFFER_HEIGHT]; // which pa
 
 void (* display_notify_vblank)();
 
-uint8_t window_interal_line_counter = 0;
+uint8_t window_internal_line_counter = 0;
 
 /* DMG stuff */
 
@@ -373,7 +373,7 @@ __always_inline static void draw_window_line_dmg(uint8_t line)
         byte window_map_pixel_index_x = x - real_window_origin_x; // seems fine
         byte window_map_pixel_index_y = line - real_window_origin_y; // seems fine
 
-        //window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, dmg-acid2
+        //window_map_pixel_index_y += (window_internal_line_counter - window_map_pixel_index_y); // thanks, dmg-acid2
 
         // which pixel in the tile
         byte window_tile_pixel_index_x = window_map_pixel_index_x % 8;
@@ -435,7 +435,7 @@ __always_inline static void draw_window_line_dmg(uint8_t line)
         bg_color_indices[pixel_index] = color_palette_index;
     }
 
-    window_interal_line_counter++;
+    window_internal_line_counter++;
 }
 
 __always_inline static void draw_sprites_line_dmg(uint8_t line)
@@ -658,7 +658,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
         byte window_map_pixel_index_x = x - real_window_origin_x; // seems fine
         byte window_map_pixel_index_y = line - real_window_origin_y; // seems fine
 
-        //window_map_pixel_index_y += (window_interal_line_counter - window_map_pixel_index_y); // thanks, cgb-acid2
+        //window_map_pixel_index_y += (window_internal_line_counter - window_map_pixel_index_y); // thanks, cgb-acid2
 
         // which pixel in the tile
         byte window_tile_pixel_index_x = window_map_pixel_index_x % 8;
@@ -740,7 +740,7 @@ __always_inline static void draw_window_line_cgb(uint8_t line)
             bg_color_indices[pixel_index] = 5;
     }
 
-    window_interal_line_counter++;
+    window_internal_line_counter++;
 }
 
 __always_inline static void draw_sprites_line_cgb(uint8_t line)
@@ -898,7 +898,7 @@ __always_inline static void hblank()
 
 __always_inline static void vblank()
 {
-    window_interal_line_counter = 0;
+    window_internal_line_counter = 0;
 
     // do vblank stuff
 
