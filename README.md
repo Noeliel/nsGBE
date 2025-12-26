@@ -16,8 +16,8 @@ Development generally favors compatibility over accuracy and performance.
 ## Give it a try
 
 You can find browser-based versions of nsGBE hosted on my website.  
-[WebAssembly variant](https://noeliel.com/nsGBE/wasm/) (better performance but requires your browser to support WebAssembly.)  
-[JavaScript variant](https://noeliel.com/nsGBE/js/) (better browser compatibility but worse performance.)
+[WebAssembly variant](https://nsgbe.noeliel.com/wasm/) (better performance but requires your browser to support WebAssembly.)  
+[JavaScript variant](https://nsgbe.noeliel.com/js/) (better browser compatibility but worse performance.)
 
 Please note that you will have to supply your own ROM files.  
 Also, this application runs entirely on your local machine in your browser, so no files are uploaded to any server at any point in time.
