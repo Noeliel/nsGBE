@@ -27,7 +27,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_C_FLAGS "-march=native -w -s LINKABLE=1 -s EXPORT_ALL=1 -s USE_SDL=2 -lidbfs.js")
+set(CMAKE_C_FLAGS "-w -s LINKABLE=1 -s EXPORT_ALL=1 -s USE_SDL=2 -s EXPORTED_RUNTIME_METHODS=HEAPU8 -lidbfs.js")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 

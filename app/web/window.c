@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: LGPL-2.0-only
 
+#include <sys/time.h>
 #include <SDL2/SDL.h>
 #include "../../emu/nsgbe.h"
 
