@@ -27,11 +27,24 @@ Also, this application runs entirely on your local machine in your browser, so n
 Currently, the project provides gui implementations based on GTK+ 3.0 (Cairo) and SDL2 targeting Linux.  
 Windows and macOS are not officially supported, but the browser-based variant works on those.  
 
-Run `$ ./configure-gtkplus` to generate build files for GTK+ using CMake.  
-Alternatively, run `$ ./configure-sdl2` to generate build files for SDL2.  
+Run one of...  
+- `$ ./configure-gtkplus` for Linux GTK+  
+- `$ ./configure-sdl2` for Linux SDL2  
+
 Then, run `$ ./build` to compile. This will produce `nsgbe` in `out/`.
 
 **Note:** To use Clang instead of your default C/C++ compiler (likely GCC if you're on Linux), run `$ export CC=/usr/bin/clang` and `$ export CXX=/usr/bin/clang++` (adjust paths if necessary) prior to executing the `configure-*` script.
+
+## Building (web)
+
+Install emsdk/emscripten. The build is known to work on version `4.0.22`.  
+To use `emcc` for the build, run `$ export CC=$(which emcc)` and `$ export CXX=$(which em++)`.
+
+Then, run one of...
+- `$ ./configure-wasm` for WebAssembly  
+- `$ ./configure-js` for JavaScript  
+
+Lastly, run `$ ./build` to compile. This will produce your desired artifacts in `out/`.
 
 ## Usage
 
